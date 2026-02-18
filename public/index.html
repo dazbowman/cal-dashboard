@@ -98,55 +98,44 @@
           <!-- Pi System Stats - 4 cards in a row -->
           <div class="stats-row">
             <div class="card stat-card">
-              <div class="stat-icon">🔥</div>
-              <div class="stat-info">
+              <div class="stat-header">
+                <span class="stat-icon">🔥</span>
                 <span class="stat-value" id="pi-cpu">--</span>
-                <span class="stat-label">CPU Usage</span>
               </div>
+              <span class="stat-label">CPU Usage</span>
               <div class="stat-bar">
                 <div class="stat-bar-fill cpu-fill" id="pi-cpu-bar" style="width: 0%"></div>
               </div>
             </div>
             <div class="card stat-card">
-              <div class="stat-icon">💾</div>
-              <div class="stat-info">
+              <div class="stat-header">
+                <span class="stat-icon">💾</span>
                 <span class="stat-value" id="pi-memory">--</span>
-                <span class="stat-label">Memory</span>
               </div>
+              <span class="stat-label">Memory</span>
               <div class="stat-bar">
                 <div class="stat-bar-fill memory-fill" id="pi-memory-bar" style="width: 0%"></div>
               </div>
             </div>
             <div class="card stat-card">
-              <div class="stat-icon">💿</div>
-              <div class="stat-info">
+              <div class="stat-header">
+                <span class="stat-icon">💿</span>
                 <span class="stat-value" id="pi-disk">--</span>
-                <span class="stat-label">Disk</span>
               </div>
+              <span class="stat-label">Disk</span>
               <div class="stat-bar">
                 <div class="stat-bar-fill disk-fill" id="pi-disk-bar" style="width: 0%"></div>
               </div>
             </div>
-            <div class="card stat-card">
-              <div class="stat-icon">🌡️</div>
-              <div class="stat-info">
+            <div class="card stat-card temp-card">
+              <div class="stat-header">
+                <span class="stat-icon">🌡️</span>
                 <span class="stat-value" id="pi-temp">--</span>
-                <span class="stat-label">Temperature</span>
               </div>
-              <div class="stat-bar">
-                <div class="stat-bar-fill temp-fill" id="pi-temp-bar" style="width: 0%"></div>
+              <span class="stat-label">Temperature</span>
+              <div class="temp-mini-chart">
+                <canvas id="temp-chart"></canvas>
               </div>
-            </div>
-          </div>
-
-          <!-- Temperature Graph - Full Width -->
-          <div class="card temp-chart-card full-width">
-            <div class="temp-chart-header">
-              <h3>🌡️ Temperature History</h3>
-              <span class="temp-time-label">Last 5 minutes</span>
-            </div>
-            <div class="temp-chart-wrapper">
-              <canvas id="temp-chart"></canvas>
             </div>
           </div>
 

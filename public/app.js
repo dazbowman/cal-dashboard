@@ -931,66 +931,37 @@ class CalDashboard {
         },
         scales: {
           x: {
-            display: true,
-            grid: { display: false },
-            ticks: {
-              color: 'rgba(255,255,255,0.4)',
-              font: { size: 9 },
-              maxTicksLimit: 6,
-              maxRotation: 0
-            },
-            border: { display: false }
+            display: false
           },
           y: {
-            display: true,
+            display: false,
             suggestedMin: 100,
-            suggestedMax: 180,
-            grid: {
-              color: 'rgba(255,255,255,0.06)',
-              drawBorder: false
-            },
-            ticks: {
-              color: 'rgba(255,255,255,0.5)',
-              font: { size: 10 },
-              padding: 8,
-              stepSize: 20,
-              callback: (value) => value + '°'
-            },
-            border: { display: false }
+            suggestedMax: 180
           }
         },
         plugins: {
           legend: { display: false },
           tooltip: {
+            enabled: true,
             backgroundColor: 'rgba(0,0,0,0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1,
-            cornerRadius: 6,
-            padding: 10,
+            titleFont: { size: 10 },
+            bodyFont: { size: 11 },
+            padding: 6,
             displayColors: false,
             callbacks: {
+              title: () => '',
               label: (ctx) => ctx.parsed.y.toFixed(1) + '°F'
             }
           },
           annotation: {
             annotations: {
-              cautionLine: {
-                type: 'line',
-                yMin: 158,
-                yMax: 158,
-                borderColor: 'rgba(245, 158, 11, 0.4)',
-                borderWidth: 1,
-                borderDash: [4, 4]
-              },
               dangerLine: {
                 type: 'line',
                 yMin: 176,
                 yMax: 176,
-                borderColor: 'rgba(239, 68, 68, 0.4)',
+                borderColor: 'rgba(239, 68, 68, 0.3)',
                 borderWidth: 1,
-                borderDash: [4, 4]
+                borderDash: [3, 3]
               }
             }
           }

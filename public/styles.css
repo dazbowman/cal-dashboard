@@ -1135,29 +1135,30 @@ body {
 .stat-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
+  gap: 8px;
+  padding: 16px;
+  min-height: 140px;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .stat-icon {
-  font-size: 28px;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  font-size: 24px;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1169,6 +1170,22 @@ body {
   border-radius: 3px;
   overflow: hidden;
   margin-top: auto;
+}
+
+/* Temperature card with mini chart */
+.temp-card {
+  padding-bottom: 12px;
+}
+
+.temp-mini-chart {
+  flex: 1;
+  min-height: 60px;
+  margin-top: 4px;
+}
+
+.temp-mini-chart canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .stat-bar-fill {
@@ -1346,39 +1363,4 @@ body {
   }
 }
 
-/* ===== Temperature Chart Card ===== */
-.temp-chart-card {
-  padding: 0 !important;
-  overflow: hidden;
-}
-
-.temp-chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.temp-chart-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.temp-time-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.temp-chart-wrapper {
-  position: relative;
-  height: 140px;
-  padding: 12px 16px 16px 8px;
-}
-
-.temp-chart-wrapper canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
+/* Temperature Chart Card - removed, chart now in stat card */
