@@ -536,7 +536,7 @@ body {
 .voice-recording-indicator .recording-time {
   font-size: 13px;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: 'Manrope', sans-serif;
 }
 
 .voice-recording-indicator .cancel-btn {
@@ -589,7 +589,7 @@ body {
 .voice-preview .preview-duration {
   font-size: 13px;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: 'Manrope', sans-serif;
 }
 
 .voice-preview .clear-btn {
@@ -662,7 +662,7 @@ body {
   border: none;
   padding: 20px;
   color: var(--text-primary);
-  font-family: 'Monaco', 'Menlo', monospace;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   line-height: 1.6;
   resize: vertical;
@@ -837,7 +837,7 @@ body {
 .cron-schedule {
   font-size: 13px;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: 'Manrope', sans-serif;
 }
 
 .cron-status {
@@ -1396,7 +1396,7 @@ body {
 .cron-schedule {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: monospace;
+  font-family: 'Manrope', sans-serif;
 }
 
 .cron-status {
