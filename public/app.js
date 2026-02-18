@@ -955,11 +955,19 @@ class CalDashboard {
           },
           annotation: {
             annotations: {
+              cautionLine: {
+                type: 'line',
+                yMin: 158,
+                yMax: 158,
+                borderColor: 'rgba(245, 158, 11, 0.4)',
+                borderWidth: 1,
+                borderDash: [3, 3]
+              },
               dangerLine: {
                 type: 'line',
                 yMin: 176,
                 yMax: 176,
-                borderColor: 'rgba(239, 68, 68, 0.3)',
+                borderColor: 'rgba(239, 68, 68, 0.4)',
                 borderWidth: 1,
                 borderDash: [3, 3]
               }
@@ -1077,7 +1085,10 @@ class CalDashboard {
       const diskEl = document.getElementById('pi-disk');
       const diskBar = document.getElementById('pi-disk-bar');
       if (diskEl) {
-        diskEl.textContent = `${data.disk.used} / ${data.disk.total}`;
+        // Convert G to GB for display
+        const used = data.disk.used.replace('G', 'GB');
+        const total = data.disk.total.replace('G', 'GB');
+        diskEl.textContent = `${used} / ${total}`;
         const diskPercent = parseInt(data.disk.percent);
         diskBar.style.width = diskPercent + '%';
         diskBar.classList.toggle('warning', diskPercent > 80);
