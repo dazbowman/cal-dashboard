@@ -16,6 +16,10 @@ const OPENCLAW_BASE = '/home/dbowman/.openclaw';
 const WORKSPACE = path.join(OPENCLAW_BASE, 'workspace');
 const GEMINI_KEY_PATH = path.join(OPENCLAW_BASE, 'credentials', 'gemini.key');
 
+// Temperature history storage (persists across page refreshes)
+const tempHistory = [];
+const MAX_TEMP_POINTS = 60; // 5 minutes at 5-second intervals
+
 // Load Gemini key for voice transcription
 let GEMINI_KEY = '';
 try {
@@ -233,6 +237,22 @@ app.get('/api/system', async (req, res) => {
       networkStats.tx = (parseInt(txBytes) / 1024 / 1024 / 1024).toFixed(2) + ' GB';
     } catch (e) {}
     
+    // Store temperature in history
+    const now = Date.now();
+    const tempC = parseFloat(cpuTemp) || 0;
+    const tempF = (tempC * 9/5) + 32;
+    
+    tempHistory.push({
+      time: now,
+      temp: tempF
+    });
+    
+    // Keep only last 5 minutes
+    const fiveMinAgo = now - (5 * 60 * 1000);
+    while (tempHistory.length > 0 && tempHistory[0].time < fiveMinAgo) {
+      tempHistory.shift();
+    }
+    
     res.json({
       cpu: {
         usage: parseFloat(cpuInfo) || 0,
@@ -252,7 +272,8 @@ app.get('/api/system', async (req, res) => {
       uptime: uptimeRaw,
       processes: parseInt(processes),
       network: networkStats,
-      timestamp: Date.now()
+      timestamp: now,
+      tempHistory: tempHistory
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

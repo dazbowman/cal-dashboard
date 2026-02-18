@@ -980,29 +980,26 @@ class CalDashboard {
     });
   }
   
-  updateTempChart(tempF) {
-    if (!this.tempChart) return;
+  updateTempChartFromHistory(history) {
+    if (!this.tempChart || !history || history.length === 0) return;
     
-    const now = new Date();
-    const timeLabel = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
-    // Add new data point
-    this.tempHistory.push({ time: timeLabel, temp: tempF });
-    
-    // Keep only last 5 minutes (60 points at 5-second intervals)
-    if (this.tempHistory.length > this.maxTempPoints) {
-      this.tempHistory.shift();
-    }
+    // Convert timestamps to time labels
+    const labels = history.map(p => {
+      const d = new Date(p.time);
+      return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    });
+    const temps = history.map(p => p.temp);
     
     // Update chart data
-    this.tempChart.data.labels = this.tempHistory.map(p => p.time);
-    this.tempChart.data.datasets[0].data = this.tempHistory.map(p => p.temp);
+    this.tempChart.data.labels = labels;
+    this.tempChart.data.datasets[0].data = temps;
     
-    // Update line color based on current temp
+    // Update line color based on current (latest) temp
+    const currentTemp = temps[temps.length - 1];
     let lineColor = '#10b981'; // green - safe
-    if (tempF >= this.tempThresholds.danger) {
+    if (currentTemp >= this.tempThresholds.danger) {
       lineColor = '#ef4444'; // red - danger
-    } else if (tempF >= this.tempThresholds.caution) {
+    } else if (currentTemp >= this.tempThresholds.caution) {
       lineColor = '#f59e0b'; // yellow - caution
     }
     
@@ -1038,8 +1035,10 @@ class CalDashboard {
         const tempF = (tempC * 9/5) + 32;
         tempEl.textContent = tempF.toFixed(1) + '°F';
         
-        // Update the temperature chart
-        this.updateTempChart(tempF);
+        // Update the temperature chart with server-stored history
+        if (data.tempHistory) {
+          this.updateTempChartFromHistory(data.tempHistory);
+        }
       }
       
       // Memory
