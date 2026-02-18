@@ -1136,7 +1136,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 14px;
+  padding: 16px;
   min-height: 100px;
 }
 
@@ -1180,7 +1180,7 @@ body {
 .gauge-card {
   align-items: center;
   justify-content: center;
-  padding: 10px 16px 6px;
+  padding: 16px;
 }
 
 .gauge-card .stat-label {
@@ -1220,7 +1220,7 @@ body {
 
 /* Temperature card with mini chart */
 .temp-card {
-  padding-bottom: 8px;
+  padding: 16px;
 }
 
 .temp-mini-chart {
