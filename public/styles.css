@@ -1140,7 +1140,7 @@ body {
 /* ===== Stats Row ===== */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 0.85fr 0.85fr 0.85fr 1.45fr;
   gap: 16px;
   grid-column: 1 / -1;
 }
