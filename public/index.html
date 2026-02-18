@@ -97,24 +97,38 @@
         <div class="dashboard-grid">
           <!-- Pi System Stats - 4 cards in a row -->
           <div class="stats-row">
-            <div class="card stat-card">
-              <div class="stat-header">
-                <span class="stat-icon">🔥</span>
-                <span class="stat-value" id="pi-cpu">--</span>
-              </div>
+            <div class="card stat-card gauge-card">
               <span class="stat-label">CPU Usage</span>
-              <div class="stat-bar">
-                <div class="stat-bar-fill cpu-fill" id="pi-cpu-bar" style="width: 0%"></div>
+              <div class="gauge-container">
+                <svg class="gauge" viewBox="0 0 120 70">
+                  <defs>
+                    <linearGradient id="gauge-gradient-cpu" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style="stop-color:#10b981"/>
+                      <stop offset="50%" style="stop-color:#f59e0b"/>
+                      <stop offset="100%" style="stop-color:#ef4444"/>
+                    </linearGradient>
+                  </defs>
+                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="8" stroke-linecap="round"/>
+                  <path class="gauge-fill" id="cpu-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-cpu)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 157"/>
+                  <text class="gauge-value" id="pi-cpu" x="60" y="55" text-anchor="middle">--%</text>
+                </svg>
               </div>
             </div>
-            <div class="card stat-card">
-              <div class="stat-header">
-                <span class="stat-icon">💾</span>
-                <span class="stat-value" id="pi-memory">--</span>
-              </div>
+            <div class="card stat-card gauge-card">
               <span class="stat-label">Memory</span>
-              <div class="stat-bar">
-                <div class="stat-bar-fill memory-fill" id="pi-memory-bar" style="width: 0%"></div>
+              <div class="gauge-container">
+                <svg class="gauge" viewBox="0 0 120 70">
+                  <defs>
+                    <linearGradient id="gauge-gradient-mem" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style="stop-color:#10b981"/>
+                      <stop offset="50%" style="stop-color:#f59e0b"/>
+                      <stop offset="100%" style="stop-color:#ef4444"/>
+                    </linearGradient>
+                  </defs>
+                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="8" stroke-linecap="round"/>
+                  <path class="gauge-fill" id="memory-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-mem)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 157"/>
+                  <text class="gauge-value" id="pi-memory" x="60" y="55" text-anchor="middle">--%</text>
+                </svg>
               </div>
             </div>
             <div class="card stat-card">

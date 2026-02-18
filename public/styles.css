@@ -1172,6 +1172,42 @@ body {
   margin-top: auto;
 }
 
+/* Gauge Cards */
+.gauge-card {
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px 8px;
+}
+
+.gauge-card .stat-label {
+  margin-bottom: 4px;
+}
+
+.gauge-container {
+  width: 100%;
+  max-width: 140px;
+}
+
+.gauge {
+  width: 100%;
+  height: auto;
+}
+
+.gauge-bg {
+  stroke: var(--bg-primary);
+}
+
+.gauge-fill {
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.gauge-value {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--text-primary);
+  font-family: inherit;
+}
+
 /* Temperature card with mini chart */
 .temp-card {
   padding-bottom: 12px;

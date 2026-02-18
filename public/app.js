@@ -1020,14 +1020,16 @@ class CalDashboard {
       const data = await res.json();
       console.log('Pi stats loaded:', data);
       
-      // CPU
+      // CPU Gauge
       const cpuEl = document.getElementById('pi-cpu');
-      const cpuBar = document.getElementById('pi-cpu-bar');
-      if (cpuEl) {
-        cpuEl.textContent = data.cpu.usage.toFixed(1) + '%';
-        cpuBar.style.width = Math.min(data.cpu.usage, 100) + '%';
-        cpuBar.classList.toggle('warning', data.cpu.usage > 70);
-        cpuBar.classList.toggle('danger', data.cpu.usage > 90);
+      const cpuGauge = document.getElementById('cpu-gauge');
+      if (cpuEl && cpuGauge) {
+        const cpuPercent = Math.min(data.cpu.usage, 100);
+        cpuEl.textContent = cpuPercent.toFixed(0) + '%';
+        // Arc length is ~157 (half circle with radius 50)
+        const arcLength = 157;
+        const filled = (cpuPercent / 100) * arcLength;
+        cpuGauge.setAttribute('stroke-dasharray', `${filled} ${arcLength}`);
       }
       
       // Temperature - convert to Fahrenheit
@@ -1052,14 +1054,15 @@ class CalDashboard {
         }
       }
       
-      // Memory
+      // Memory Gauge
       const memEl = document.getElementById('pi-memory');
-      const memBar = document.getElementById('pi-memory-bar');
-      if (memEl) {
-        memEl.textContent = `${data.memory.used}MB / ${data.memory.total}MB`;
-        memBar.style.width = data.memory.percent + '%';
-        memBar.classList.toggle('warning', data.memory.percent > 80);
-        memBar.classList.toggle('danger', data.memory.percent > 95);
+      const memGauge = document.getElementById('memory-gauge');
+      if (memEl && memGauge) {
+        const memPercent = Math.min(data.memory.percent, 100);
+        memEl.textContent = memPercent.toFixed(0) + '%';
+        const arcLength = 157;
+        const filled = (memPercent / 100) * arcLength;
+        memGauge.setAttribute('stroke-dasharray', `${filled} ${arcLength}`);
       }
       
       // Disk
