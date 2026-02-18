@@ -357,9 +357,34 @@ wss.on('connection', (clientWs) => {
       if (msg.type === 'res' && pendingRequests.get(msg.id) === 'history') {
         pendingRequests.delete(msg.id);
         if (msg.ok && msg.payload?.messages) {
+          // Transform messages to extract text content
+          const transformedMessages = msg.payload.messages.map(m => {
+            let text = '';
+            
+            // Content can be string or array of content blocks
+            if (typeof m.content === 'string') {
+              text = m.content;
+            } else if (Array.isArray(m.content)) {
+              // Extract text from content blocks, skip thinking blocks
+              const textBlocks = m.content.filter(block => block.type === 'text');
+              text = textBlocks.map(block => block.text || '').join('\n');
+            } else if (m.content && typeof m.content === 'object') {
+              // Handle object with numeric keys (array-like)
+              const values = Object.values(m.content);
+              const textBlocks = values.filter(block => block && block.type === 'text');
+              text = textBlocks.map(block => block.text || '').join('\n');
+            }
+            
+            return {
+              role: m.role,
+              content: text,
+              timestamp: m.timestamp
+            };
+          }).filter(m => m.content); // Remove empty messages
+          
           clientWs.send(JSON.stringify({
             type: 'history',
-            messages: msg.payload.messages
+            messages: transformedMessages
           }));
         }
         return;
