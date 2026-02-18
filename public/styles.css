@@ -154,9 +154,15 @@ body {
 }
 
 .nav-icon {
-  font-size: 18px;
-  width: 24px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #8b949e;
+}
+
+.nav-item:hover .nav-icon,
+.nav-item.active .nav-icon {
+  color: var(--text-primary);
 }
 
 .sidebar-footer {
