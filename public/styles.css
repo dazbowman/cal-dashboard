@@ -1456,3 +1456,17 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Secondary row */
+.secondary-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .secondary-row {
+    grid-template-columns: 1fr;
+  }
+}
