@@ -1334,7 +1334,7 @@ body {
 
 .temp-graph-container {
   position: relative;
-  height: 120px;
+  height: 100px;
   margin-top: 8px;
 }
 
@@ -1346,8 +1346,9 @@ body {
 .temp-zones {
   display: flex;
   gap: 12px;
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 10px;
+  color: var(--text-secondary);
 }
 
 .zone-label {

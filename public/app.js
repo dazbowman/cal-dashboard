@@ -933,7 +933,7 @@ class CalDashboard {
               color: 'rgba(255,255,255,0.1)'
             },
             ticks: {
-              color: 'var(--text-secondary)',
+              color: '#e6edf3',
               font: { size: 10 },
               callback: (value) => value + '°F'
             }
