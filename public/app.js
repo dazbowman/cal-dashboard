@@ -205,9 +205,25 @@ class CalDashboard {
   }
   
   updateStatus(state, text) {
+    // Update avatar ring
+    const avatarRing = document.getElementById('avatar-ring');
+    if (avatarRing) {
+      avatarRing.className = 'avatar-ring';
+      if (state === 'connected' || state === 'working') {
+        avatarRing.classList.add('active');
+      } else if (state === 'error') {
+        avatarRing.classList.add('error');
+      } else {
+        avatarRing.classList.add('idle');
+      }
+    }
+    
+    // Legacy status indicator (if exists)
     const indicator = document.getElementById('status-indicator');
+    if (!indicator) return;
     const dot = indicator.querySelector('.status-dot');
     const statusText = indicator.querySelector('.status-text');
+    if (!dot || !statusText) return;
     
     dot.className = 'status-dot ' + state;
     statusText.textContent = text;

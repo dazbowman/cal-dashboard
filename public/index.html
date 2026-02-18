@@ -16,13 +16,38 @@
     <!-- Left Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="logo">
-          <span class="logo-icon">🐱</span>
-          <span class="logo-text">Cal</span>
-        </div>
-        <div class="status-indicator" id="status-indicator">
-          <span class="status-dot"></span>
-          <span class="status-text">Connecting...</span>
+        <span class="logo-text">Caliopus</span>
+        <div class="profile-avatar" id="profile-avatar">
+          <div class="avatar-ring" id="avatar-ring"></div>
+          <div class="avatar-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Cat face -->
+              <circle cx="50" cy="55" r="35" fill="#4a4a5c"/>
+              <!-- Ears -->
+              <polygon points="20,35 30,10 45,30" fill="#4a4a5c"/>
+              <polygon points="80,35 70,10 55,30" fill="#4a4a5c"/>
+              <polygon points="25,32 32,15 42,28" fill="#3d3d4d"/>
+              <polygon points="75,32 68,15 58,28" fill="#3d3d4d"/>
+              <!-- Eyes -->
+              <ellipse cx="35" cy="50" rx="8" ry="10" fill="#1a1a2e"/>
+              <ellipse cx="65" cy="50" rx="8" ry="10" fill="#1a1a2e"/>
+              <ellipse cx="37" cy="48" rx="4" ry="5" fill="#a855f7"/>
+              <ellipse cx="67" cy="48" rx="4" ry="5" fill="#a855f7"/>
+              <circle cx="38" cy="46" r="2" fill="#fff"/>
+              <circle cx="68" cy="46" r="2" fill="#fff"/>
+              <!-- Nose -->
+              <ellipse cx="50" cy="62" rx="5" ry="4" fill="#3d3d4d"/>
+              <!-- Mouth -->
+              <path d="M 45 68 Q 50 73 55 68" stroke="#3d3d4d" stroke-width="2" fill="none"/>
+              <!-- Whiskers -->
+              <line x1="15" y1="55" x2="30" y2="58" stroke="#6b6b7a" stroke-width="1.5"/>
+              <line x1="15" y1="62" x2="30" y2="62" stroke="#6b6b7a" stroke-width="1.5"/>
+              <line x1="15" y1="69" x2="30" y2="66" stroke="#6b6b7a" stroke-width="1.5"/>
+              <line x1="85" y1="55" x2="70" y2="58" stroke="#6b6b7a" stroke-width="1.5"/>
+              <line x1="85" y1="62" x2="70" y2="62" stroke="#6b6b7a" stroke-width="1.5"/>
+              <line x1="85" y1="69" x2="70" y2="66" stroke="#6b6b7a" stroke-width="1.5"/>
+            </svg>
+          </div>
         </div>
       </div>
       
@@ -154,26 +179,6 @@
             </div>
           </div>
 
-          <div class="card status-card">
-            <h3>Status</h3>
-            <div class="status-display" id="dashboard-status">
-              <div class="big-status">
-                <span class="status-emoji">😺</span>
-                <span class="status-label">Idle</span>
-              </div>
-              <div class="status-details">
-                <div class="detail-row">
-                  <span class="label">Model</span>
-                  <span class="value" id="model-name">--</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Last Active</span>
-                  <span class="value" id="last-active">--</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           <div class="card activity-card">
             <h3>🔄 Activity Feed</h3>
             <div class="activity-filters">

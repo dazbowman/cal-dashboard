@@ -54,62 +54,69 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-.logo {
+.sidebar-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
-}
-
-.logo-icon {
-  font-size: 28px;
 }
 
 .logo-text {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), #a371f7);
+  background: linear-gradient(135deg, #a855f7, #c084fc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
+.profile-avatar {
+  position: relative;
+  width: 80px;
+  height: 80px;
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
+.avatar-ring {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  background: var(--text-muted);
-  animation: pulse 2s infinite;
+  border: 3px solid var(--text-muted);
+  transition: border-color 0.3s ease;
 }
 
-.status-dot.working {
-  background: var(--success);
-  animation: pulse-fast 1s infinite;
+.avatar-ring.active {
+  border-color: #10b981;
+  animation: ring-pulse 1.5s ease-in-out infinite;
 }
 
-.status-dot.idle {
-  background: var(--warning);
+.avatar-ring.idle {
+  border-color: #6b7280;
 }
 
-.status-dot.sleeping {
-  background: var(--text-muted);
+.avatar-ring.error {
+  border-color: #f59e0b;
 }
 
-.status-dot.connected {
-  background: var(--success);
+@keyframes ring-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.avatar-image {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2d2d3d;
+}
+
+.avatar-image svg {
+  width: 100%;
+  height: 100%;
 }
 
 @keyframes pulse-fast {
