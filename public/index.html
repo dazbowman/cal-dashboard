@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cal's Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">🐱</span>
+          <span class="logo-text">Cal</span>
+        </div>
+        <div class="status-indicator" id="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Connecting...</span>
+        </div>
+      </div>
+      
+      <nav class="nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="chat">
+          <span class="nav-icon">💬</span>
+          <span class="nav-text">Chat</span>
+        </a>
+        <a href="#" class="nav-item" data-page="dna">
+          <span class="nav-icon">🧬</span>
+          <span class="nav-text">DNA</span>
+        </a>
+        <a href="#" class="nav-item" data-page="memory">
+          <span class="nav-icon">🧠</span>
+          <span class="nav-text">Memory</span>
+        </a>
+        <a href="#" class="nav-item" data-page="skills">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text">Skills</span>
+        </a>
+        <a href="#" class="nav-item" data-page="cron">
+          <span class="nav-icon">⏰</span>
+          <span class="nav-text">Cron Jobs</span>
+        </a>
+        <a href="#" class="nav-item" data-page="schedule">
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">Schedule</span>
+        </a>
+        <a href="#" class="nav-item" data-page="goals">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-text">Goals</span>
+        </a>
+        <a href="#" class="nav-item" data-page="todo">
+          <span class="nav-icon">✅</span>
+          <span class="nav-text">To Do List</span>
+        </a>
+        <a href="#" class="nav-item" data-page="missions">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-text">Mission Queue</span>
+        </a>
+        <a href="#" class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="version">v1.0.0</div>
+      </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <button class="menu-btn" id="menu-btn">☰</button>
+      <div class="mobile-logo">🐱 Cal</div>
+      <button class="chat-btn" id="mobile-chat-btn">💬</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+      <!-- Dashboard Page -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <span class="page-subtitle">Overview of Cal's activities</span>
+        </div>
+        
+        <div class="dashboard-grid">
+          <div class="card status-card">
+            <h3>Status</h3>
+            <div class="status-display" id="dashboard-status">
+              <div class="big-status">
+                <span class="status-emoji">😺</span>
+                <span class="status-label">Idle</span>
+              </div>
+              <div class="status-details">
+                <div class="detail-row">
+                  <span class="label">Uptime</span>
+                  <span class="value" id="uptime">--</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Last Active</span>
+                  <span class="value" id="last-active">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3>Recent Activity</h3>
+            <div class="activity-list" id="activity-list">
+              <div class="empty-state">No recent activity</div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3>Token Usage</h3>
+            <div class="token-stats" id="token-stats">
+              <div class="stat">
+                <span class="stat-value">--</span>
+                <span class="stat-label">Today</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">--</span>
+                <span class="stat-label">This Week</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3>Current Work</h3>
+            <div class="current-work" id="current-work">
+              <div class="empty-state">Nothing in progress</div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3>Queued Tasks</h3>
+            <div class="task-queue" id="task-queue">
+              <div class="empty-state">Queue is empty</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Page -->
+      <div class="page" id="page-chat">
+        <div class="page-header">
+          <h1>Chat with Cal</h1>
+        </div>
+        <div class="chat-container">
+          <div class="chat-messages" id="main-chat-messages"></div>
+          <div class="chat-input-area" id="main-chat-input-area">
+            <button class="voice-btn" id="main-voice-btn" title="Hold to record">🎤</button>
+            <div class="voice-recording-indicator" id="main-recording-indicator">
+              <span class="recording-dot"></span>
+              <div class="waveform">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+              </div>
+              <span class="recording-time" id="main-recording-time">0:00</span>
+              <button class="cancel-btn" id="main-cancel-recording" title="Cancel">✕</button>
+            </div>
+            <div class="voice-preview" id="main-voice-preview">
+              <span class="preview-icon">🎤</span>
+              <div class="preview-waveform" id="main-preview-waveform"></div>
+              <span class="preview-duration" id="main-preview-duration">0:00</span>
+              <button class="clear-btn" id="main-clear-voice" title="Clear">✕</button>
+            </div>
+            <textarea id="main-chat-input" placeholder="Message Cal..." rows="1"></textarea>
+            <button class="send-btn" id="main-send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DNA Page -->
+      <div class="page" id="page-dna">
+        <div class="page-header">
+          <h1>DNA</h1>
+          <span class="page-subtitle">Core identity files</span>
+        </div>
+        <div class="dna-tabs">
+          <button class="tab-btn active" data-file="SOUL.md">SOUL.md</button>
+          <button class="tab-btn" data-file="IDENTITY.md">IDENTITY.md</button>
+          <button class="tab-btn" data-file="USER.md">USER.md</button>
+        </div>
+        <div class="editor-container">
+          <textarea class="file-editor" id="dna-editor" placeholder="Loading..."></textarea>
+          <div class="editor-actions">
+            <button class="btn btn-primary" id="save-dna-btn">Save Changes</button>
+            <span class="save-status" id="dna-save-status"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Page -->
+      <div class="page" id="page-memory">
+        <div class="page-header">
+          <h1>Memory</h1>
+          <span class="page-subtitle">Browse and edit memory files</span>
+        </div>
+        <div class="memory-layout">
+          <div class="memory-sidebar">
+            <div class="memory-section">
+              <h4>Long-term Memory</h4>
+              <a href="#" class="memory-file" data-file="MEMORY.md">MEMORY.md</a>
+            </div>
+            <div class="memory-section">
+              <h4>Daily Notes</h4>
+              <div id="memory-file-list" class="memory-files"></div>
+            </div>
+          </div>
+          <div class="memory-editor">
+            <div class="memory-file-header">
+              <span id="memory-current-file">Select a file</span>
+            </div>
+            <textarea class="file-editor" id="memory-editor" placeholder="Select a file to edit..."></textarea>
+            <div class="editor-actions">
+              <button class="btn btn-primary" id="save-memory-btn">Save Changes</button>
+              <span class="save-status" id="memory-save-status"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills Page -->
+      <div class="page" id="page-skills">
+        <div class="page-header">
+          <h1>Skills</h1>
+          <span class="page-subtitle">Available capabilities</span>
+        </div>
+        <div class="skills-grid" id="skills-grid">
+          <div class="empty-state">Loading skills...</div>
+        </div>
+      </div>
+
+      <!-- Cron Jobs Page -->
+      <div class="page" id="page-cron">
+        <div class="page-header">
+          <h1>Cron Jobs</h1>
+          <span class="page-subtitle">Scheduled tasks</span>
+        </div>
+        <div class="cron-list" id="cron-list">
+          <div class="empty-state">Loading cron jobs...</div>
+        </div>
+      </div>
+
+      <!-- Placeholder Pages -->
+      <div class="page" id="page-schedule">
+        <div class="page-header">
+          <h1>Schedule</h1>
+        </div>
+        <div class="placeholder-content">
+          <div class="placeholder-icon">📅</div>
+          <p>Schedule view coming soon...</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-goals">
+        <div class="page-header">
+          <h1>Goals</h1>
+        </div>
+        <div class="placeholder-content">
+          <div class="placeholder-icon">🎯</div>
+          <p>Goals tracking coming soon...</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-todo">
+        <div class="page-header">
+          <h1>To Do List</h1>
+        </div>
+        <div class="placeholder-content">
+          <div class="placeholder-icon">✅</div>
+          <p>To-do list coming soon...</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-missions">
+        <div class="page-header">
+          <h1>Mission Queue</h1>
+        </div>
+        <div class="placeholder-content">
+          <div class="placeholder-icon">🚀</div>
+          <p>Mission queue coming soon...</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <h1>Settings</h1>
+        </div>
+        <div class="settings-content">
+          <div class="setting-group">
+            <h3>Connection</h3>
+            <div class="setting-row">
+              <label>Gateway Status</label>
+              <span id="gateway-status" class="status-badge">Checking...</span>
+            </div>
+          </div>
+          <div class="setting-group">
+            <h3>Theme</h3>
+            <div class="setting-row">
+              <label>Dark Mode</label>
+              <span class="status-badge">Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Side Chat Panel -->
+    <aside class="chat-panel" id="chat-panel">
+      <div class="resize-handle" id="resize-handle"></div>
+      <div class="chat-panel-header">
+        <span>Quick Chat</span>
+        <button class="minimize-btn" id="minimize-chat">−</button>
+      </div>
+      <div class="chat-panel-body">
+        <div class="chat-messages" id="side-chat-messages"></div>
+        <div class="chat-input-area" id="side-chat-input-area">
+          <button class="voice-btn" id="side-voice-btn" title="Hold to record">🎤</button>
+          <div class="voice-recording-indicator" id="side-recording-indicator">
+            <span class="recording-dot"></span>
+            <div class="waveform">
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+            </div>
+            <span class="recording-time" id="side-recording-time">0:00</span>
+            <button class="cancel-btn" id="side-cancel-recording" title="Cancel">✕</button>
+          </div>
+          <div class="voice-preview" id="side-voice-preview">
+            <span class="preview-icon">🎤</span>
+            <div class="preview-waveform" id="side-preview-waveform"></div>
+            <span class="preview-duration" id="side-preview-duration">0:00</span>
+            <button class="clear-btn" id="side-clear-voice" title="Clear">✕</button>
+          </div>
+          <textarea id="side-chat-input" placeholder="Message Cal..." rows="1"></textarea>
+          <button class="send-btn" id="side-send-btn">↑</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Minimized Chat Bar -->
+    <div class="chat-bar" id="chat-bar">
+      <span>💬 Chat with Cal</span>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
