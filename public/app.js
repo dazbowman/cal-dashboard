@@ -859,9 +859,117 @@ class CalDashboard {
     // Load DNA file
     this.loadDnaFile('SOUL.md');
     
-    // Update dashboard info
-    document.getElementById('uptime').textContent = 'Just started';
-    document.getElementById('last-active').textContent = 'Now';
+    // Load Pi stats
+    this.loadPiStats();
+    
+    // Load cron jobs mini widget
+    this.loadCronMini();
+    
+    // Start periodic updates
+    setInterval(() => this.loadPiStats(), 5000); // Every 5 seconds
+    setInterval(() => this.loadCronMini(), 30000); // Every 30 seconds
+  }
+  
+  // Pi System Stats
+  async loadPiStats() {
+    try {
+      const res = await fetch('/api/system');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      
+      // CPU
+      const cpuEl = document.getElementById('pi-cpu');
+      const cpuBar = document.getElementById('pi-cpu-bar');
+      if (cpuEl) {
+        cpuEl.textContent = data.cpu.usage.toFixed(1) + '%';
+        cpuBar.style.width = Math.min(data.cpu.usage, 100) + '%';
+        cpuBar.classList.toggle('warning', data.cpu.usage > 70);
+        cpuBar.classList.toggle('danger', data.cpu.usage > 90);
+      }
+      
+      // Temperature
+      const tempEl = document.getElementById('pi-temp');
+      const tempBar = document.getElementById('pi-temp-bar');
+      if (tempEl && data.cpu.temp !== 'N/A') {
+        const temp = parseFloat(data.cpu.temp);
+        tempEl.textContent = temp + '°C';
+        // Pi throttles at 80°C, warning at 70°C
+        tempBar.style.width = Math.min((temp / 85) * 100, 100) + '%';
+        tempBar.classList.toggle('warning', temp > 65);
+        tempBar.classList.toggle('danger', temp > 75);
+      }
+      
+      // Memory
+      const memEl = document.getElementById('pi-memory');
+      const memBar = document.getElementById('pi-memory-bar');
+      if (memEl) {
+        memEl.textContent = `${data.memory.used}MB / ${data.memory.total}MB`;
+        memBar.style.width = data.memory.percent + '%';
+        memBar.classList.toggle('warning', data.memory.percent > 80);
+        memBar.classList.toggle('danger', data.memory.percent > 95);
+      }
+      
+      // Disk
+      const diskEl = document.getElementById('pi-disk');
+      const diskBar = document.getElementById('pi-disk-bar');
+      if (diskEl) {
+        diskEl.textContent = `${data.disk.used} / ${data.disk.total}`;
+        const diskPercent = parseInt(data.disk.percent);
+        diskBar.style.width = diskPercent + '%';
+        diskBar.classList.toggle('warning', diskPercent > 80);
+        diskBar.classList.toggle('danger', diskPercent > 95);
+      }
+      
+      // Load average
+      const loadEl = document.getElementById('pi-load');
+      if (loadEl && data.cpu.loadAvg) {
+        loadEl.textContent = data.cpu.loadAvg.join(' / ');
+      }
+      
+      // Uptime
+      const uptimeEl = document.getElementById('pi-uptime');
+      if (uptimeEl) {
+        uptimeEl.textContent = data.uptime.replace('up ', '');
+      }
+      
+    } catch (err) {
+      console.error('Failed to load Pi stats:', err);
+    }
+  }
+  
+  // Cron Jobs Mini Widget
+  async loadCronMini() {
+    try {
+      const res = await fetch('/api/cron');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      
+      const container = document.getElementById('cron-mini');
+      if (!container) return;
+      
+      if (!data.jobs || data.jobs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No cron jobs</div>';
+        return;
+      }
+      
+      container.innerHTML = data.jobs.map(job => {
+        const schedule = job.schedule?.expr || job.schedule?.everyMs 
+          ? `${Math.round(job.schedule.everyMs / 60000)}m` 
+          : job.schedule?.kind || 'N/A';
+        return `
+          <div class="cron-mini-item">
+            <div>
+              <div class="cron-name">${job.name || job.file}</div>
+              <div class="cron-schedule">${schedule}</div>
+            </div>
+            <div class="cron-status ${job.enabled === false ? 'disabled' : ''}"></div>
+          </div>
+        `;
+      }).join('');
+      
+    } catch (err) {
+      console.error('Failed to load cron jobs:', err);
+    }
   }
 }
 

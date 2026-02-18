@@ -186,6 +186,79 @@ app.get('/api/cron', (req, res) => {
   }
 });
 
+// API: Get Pi system stats
+app.get('/api/system', async (req, res) => {
+  const { execSync } = require('child_process');
+  
+  try {
+    // CPU usage (1 second sample)
+    const cpuInfo = execSync("top -bn1 | grep 'Cpu(s)' | awk '{print $2}'", { encoding: 'utf8' }).trim();
+    
+    // Memory info
+    const memInfo = execSync("free -m | grep Mem", { encoding: 'utf8' }).trim().split(/\s+/);
+    const memTotal = parseInt(memInfo[1]);
+    const memUsed = parseInt(memInfo[2]);
+    const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
+    
+    // CPU temperature (Raspberry Pi specific)
+    let cpuTemp = 'N/A';
+    try {
+      const tempRaw = execSync("cat /sys/class/thermal/thermal_zone0/temp", { encoding: 'utf8' }).trim();
+      cpuTemp = (parseInt(tempRaw) / 1000).toFixed(1);
+    } catch (e) {
+      // Not a Pi or temp not available
+    }
+    
+    // Disk usage
+    const diskInfo = execSync("df -h / | tail -1", { encoding: 'utf8' }).trim().split(/\s+/);
+    const diskTotal = diskInfo[1];
+    const diskUsed = diskInfo[2];
+    const diskPercent = diskInfo[4];
+    
+    // Uptime
+    const uptimeRaw = execSync("uptime -p", { encoding: 'utf8' }).trim();
+    
+    // Load average
+    const loadAvg = execSync("cat /proc/loadavg", { encoding: 'utf8' }).trim().split(' ').slice(0, 3);
+    
+    // Number of processes
+    const processes = execSync("ps aux | wc -l", { encoding: 'utf8' }).trim();
+    
+    // Network (bytes received/sent on eth0 or wlan0)
+    let networkStats = { rx: 'N/A', tx: 'N/A' };
+    try {
+      const rxBytes = execSync("cat /sys/class/net/wlan0/statistics/rx_bytes 2>/dev/null || cat /sys/class/net/eth0/statistics/rx_bytes", { encoding: 'utf8' }).trim();
+      const txBytes = execSync("cat /sys/class/net/wlan0/statistics/tx_bytes 2>/dev/null || cat /sys/class/net/eth0/statistics/tx_bytes", { encoding: 'utf8' }).trim();
+      networkStats.rx = (parseInt(rxBytes) / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+      networkStats.tx = (parseInt(txBytes) / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    } catch (e) {}
+    
+    res.json({
+      cpu: {
+        usage: parseFloat(cpuInfo) || 0,
+        temp: cpuTemp,
+        loadAvg: loadAvg
+      },
+      memory: {
+        total: memTotal,
+        used: memUsed,
+        percent: parseFloat(memPercent)
+      },
+      disk: {
+        total: diskTotal,
+        used: diskUsed,
+        percent: diskPercent
+      },
+      uptime: uptimeRaw,
+      processes: parseInt(processes),
+      network: networkStats,
+      timestamp: Date.now()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API: Get gateway config 
 app.get('/api/config', (req, res) => {
   try {

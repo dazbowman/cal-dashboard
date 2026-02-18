@@ -93,6 +93,67 @@
         </div>
         
         <div class="dashboard-grid">
+          <!-- Pi System Stats Card - Full Width -->
+          <div class="card pi-stats-card full-width">
+            <h3>🖥️ Pi System Stats</h3>
+            <div class="pi-stats-grid" id="pi-stats">
+              <div class="pi-stat">
+                <div class="pi-stat-icon">🔥</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-cpu">--</span>
+                  <span class="pi-stat-label">CPU Usage</span>
+                </div>
+                <div class="pi-stat-bar">
+                  <div class="pi-stat-fill cpu-fill" id="pi-cpu-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="pi-stat">
+                <div class="pi-stat-icon">🌡️</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-temp">--</span>
+                  <span class="pi-stat-label">Temperature</span>
+                </div>
+                <div class="pi-stat-bar">
+                  <div class="pi-stat-fill temp-fill" id="pi-temp-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="pi-stat">
+                <div class="pi-stat-icon">💾</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-memory">--</span>
+                  <span class="pi-stat-label">Memory</span>
+                </div>
+                <div class="pi-stat-bar">
+                  <div class="pi-stat-fill memory-fill" id="pi-memory-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="pi-stat">
+                <div class="pi-stat-icon">💿</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-disk">--</span>
+                  <span class="pi-stat-label">Disk</span>
+                </div>
+                <div class="pi-stat-bar">
+                  <div class="pi-stat-fill disk-fill" id="pi-disk-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="pi-stat">
+                <div class="pi-stat-icon">⚡</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-load">--</span>
+                  <span class="pi-stat-label">Load Avg</span>
+                </div>
+              </div>
+              <div class="pi-stat">
+                <div class="pi-stat-icon">⏱️</div>
+                <div class="pi-stat-info">
+                  <span class="pi-stat-value" id="pi-uptime">--</span>
+                  <span class="pi-stat-label">Uptime</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card status-card">
             <h3>Status</h3>
             <div class="status-display" id="dashboard-status">
@@ -102,8 +163,8 @@
               </div>
               <div class="status-details">
                 <div class="detail-row">
-                  <span class="label">Uptime</span>
-                  <span class="value" id="uptime">--</span>
+                  <span class="label">Model</span>
+                  <span class="value" id="model-name">--</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Last Active</span>
@@ -113,8 +174,14 @@
             </div>
           </div>
           
-          <div class="card">
-            <h3>Recent Activity</h3>
+          <div class="card activity-card">
+            <h3>🔄 Activity Feed</h3>
+            <div class="activity-filters">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="tool">Tools</button>
+              <button class="filter-btn" data-filter="assistant">Assistant</button>
+              <button class="filter-btn" data-filter="user">User</button>
+            </div>
             <div class="activity-list" id="activity-list">
               <div class="empty-state">No recent activity</div>
             </div>
@@ -142,9 +209,9 @@
           </div>
           
           <div class="card">
-            <h3>Queued Tasks</h3>
-            <div class="task-queue" id="task-queue">
-              <div class="empty-state">Queue is empty</div>
+            <h3>Cron Jobs</h3>
+            <div class="cron-mini" id="cron-mini">
+              <div class="empty-state">Loading...</div>
             </div>
           </div>
         </div>
