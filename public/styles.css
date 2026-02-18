@@ -1193,7 +1193,7 @@ body {
 .gauge-card {
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 10px 14px;
 }
 
 .gauge-card .stat-label {
