@@ -888,9 +888,6 @@ class CalDashboard {
   
   // Temperature Chart
   initTempChart() {
-    this.tempHistory = [];
-    this.maxTempPoints = 60; // 5 minutes at 5-second intervals
-    
     const ctx = document.getElementById('temp-chart');
     if (!ctx) return;
     
@@ -902,76 +899,98 @@ class CalDashboard {
       max: 185        // 85°C
     };
     
+    // Gradient for the fill
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 140);
+    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+    
     this.tempChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: [],
         datasets: [{
-          label: 'Temperature °F',
           data: [],
           borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          backgroundColor: gradient,
           borderWidth: 2,
           fill: true,
-          tension: 0.3,
+          tension: 0.4,
           pointRadius: 0,
-          pointHoverRadius: 4
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#10b981',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 300 },
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
         scales: {
           x: {
-            display: false
+            display: true,
+            grid: { display: false },
+            ticks: {
+              color: 'rgba(255,255,255,0.4)',
+              font: { size: 9 },
+              maxTicksLimit: 6,
+              maxRotation: 0
+            },
+            border: { display: false }
           },
           y: {
-            min: 80,
-            max: 200,
+            display: true,
+            suggestedMin: 100,
+            suggestedMax: 180,
             grid: {
-              color: 'rgba(255,255,255,0.1)'
+              color: 'rgba(255,255,255,0.06)',
+              drawBorder: false
             },
             ticks: {
-              color: '#e6edf3',
+              color: 'rgba(255,255,255,0.5)',
               font: { size: 10 },
-              callback: (value) => value + '°F'
-            }
+              padding: 8,
+              stepSize: 20,
+              callback: (value) => value + '°'
+            },
+            border: { display: false }
           }
         },
         plugins: {
           legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            cornerRadius: 6,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => ctx.parsed.y.toFixed(1) + '°F'
+            }
+          },
           annotation: {
             annotations: {
               cautionLine: {
                 type: 'line',
                 yMin: 158,
                 yMax: 158,
-                borderColor: 'rgba(245, 158, 11, 0.5)',
+                borderColor: 'rgba(245, 158, 11, 0.4)',
                 borderWidth: 1,
-                borderDash: [5, 5]
+                borderDash: [4, 4]
               },
               dangerLine: {
                 type: 'line',
                 yMin: 176,
                 yMax: 176,
-                borderColor: 'rgba(239, 68, 68, 0.5)',
+                borderColor: 'rgba(239, 68, 68, 0.4)',
                 borderWidth: 1,
-                borderDash: [5, 5]
-              },
-              dangerZone: {
-                type: 'box',
-                yMin: 176,
-                yMax: 200,
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                borderWidth: 0
-              },
-              cautionZone: {
-                type: 'box',
-                yMin: 158,
-                yMax: 176,
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                borderWidth: 0
+                borderDash: [4, 4]
               }
             }
           }
@@ -983,10 +1002,10 @@ class CalDashboard {
   updateTempChartFromHistory(history) {
     if (!this.tempChart || !history || history.length === 0) return;
     
-    // Convert timestamps to time labels
+    // Convert timestamps to time labels (just minutes:seconds for cleaner look)
     const labels = history.map(p => {
       const d = new Date(p.time);
-      return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return d.toLocaleTimeString('en-US', { hour12: false, minute: '2-digit', second: '2-digit' });
     });
     const temps = history.map(p => p.temp);
     
@@ -994,17 +1013,36 @@ class CalDashboard {
     this.tempChart.data.labels = labels;
     this.tempChart.data.datasets[0].data = temps;
     
-    // Update line color based on current (latest) temp
+    // Get current temperature
     const currentTemp = temps[temps.length - 1];
+    
+    // Determine color based on temp
     let lineColor = '#10b981'; // green - safe
+    let colorClass = '';
     if (currentTemp >= this.tempThresholds.danger) {
       lineColor = '#ef4444'; // red - danger
+      colorClass = 'danger';
     } else if (currentTemp >= this.tempThresholds.caution) {
       lineColor = '#f59e0b'; // yellow - caution
+      colorClass = 'caution';
     }
     
+    // Update chart colors
     this.tempChart.data.datasets[0].borderColor = lineColor;
-    this.tempChart.data.datasets[0].backgroundColor = lineColor.replace(')', ', 0.1)').replace('rgb', 'rgba');
+    
+    // Create new gradient with current color
+    const ctx = document.getElementById('temp-chart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 140);
+    gradient.addColorStop(0, lineColor.replace(')', ', 0.3)').replace('#', 'rgba(').replace(/([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i, (m, r, g, b) => `${parseInt(r,16)}, ${parseInt(g,16)}, ${parseInt(b,16)}`));
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    this.tempChart.data.datasets[0].backgroundColor = gradient;
+    
+    // Update the large temp display in header
+    const tempDisplay = document.getElementById('temp-current');
+    if (tempDisplay) {
+      tempDisplay.textContent = currentTemp.toFixed(1) + '°F';
+      tempDisplay.className = 'temp-current ' + colorClass;
+    }
     
     this.tempChart.update('none'); // No animation for smooth updates
   }
