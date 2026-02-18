@@ -223,44 +223,20 @@
             </div>
           </div>
 
-          <div class="card activity-card">
-            <h3>🔄 Activity Feed</h3>
-            <div class="activity-filters">
-              <button class="filter-btn active" data-filter="all">All</button>
-              <button class="filter-btn" data-filter="tool">Tools</button>
-              <button class="filter-btn" data-filter="assistant">Assistant</button>
-              <button class="filter-btn" data-filter="user">User</button>
-            </div>
-            <div class="activity-list" id="activity-list">
-              <div class="empty-state">No recent activity</div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h3>Token Usage</h3>
-            <div class="token-stats" id="token-stats">
-              <div class="stat">
-                <span class="stat-value">--</span>
-                <span class="stat-label">Today</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">--</span>
-                <span class="stat-label">This Week</span>
+          <!-- Main content row - 50/50 split -->
+          <div class="main-row">
+            <div class="card main-card">
+              <h3>Current Work</h3>
+              <div class="current-work" id="current-work">
+                <div class="empty-state">Nothing in progress</div>
               </div>
             </div>
-          </div>
-          
-          <div class="card">
-            <h3>Current Work</h3>
-            <div class="current-work" id="current-work">
-              <div class="empty-state">Nothing in progress</div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h3>Cron Jobs</h3>
-            <div class="cron-mini" id="cron-mini">
-              <div class="empty-state">Loading...</div>
+            
+            <div class="card main-card">
+              <h3>Cron Jobs</h3>
+              <div class="cron-mini" id="cron-mini">
+                <div class="empty-state">Loading...</div>
+              </div>
             </div>
           </div>
         </div>
