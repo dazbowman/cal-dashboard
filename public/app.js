@@ -1037,13 +1037,6 @@ class CalDashboard {
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
     this.tempChart.data.datasets[0].backgroundColor = gradient;
     
-    // Update the large temp display in header
-    const tempDisplay = document.getElementById('temp-current');
-    if (tempDisplay) {
-      tempDisplay.textContent = currentTemp.toFixed(1) + '°F';
-      tempDisplay.className = 'temp-current ' + colorClass;
-    }
-    
     this.tempChart.update('none'); // No animation for smooth updates
   }
   
@@ -1068,10 +1061,19 @@ class CalDashboard {
       
       // Temperature - convert to Fahrenheit
       const tempEl = document.getElementById('pi-temp');
+      const tempBar = document.getElementById('pi-temp-bar');
       if (tempEl && data.cpu.temp !== 'N/A') {
         const tempC = parseFloat(data.cpu.temp);
         const tempF = (tempC * 9/5) + 32;
         tempEl.textContent = tempF.toFixed(1) + '°F';
+        
+        // Update temp bar (scale: 100°F = 0%, 185°F = 100%)
+        if (tempBar) {
+          const percent = Math.min(Math.max((tempF - 100) / 85 * 100, 0), 100);
+          tempBar.style.width = percent + '%';
+          tempBar.classList.toggle('warning', tempF >= 158);
+          tempBar.classList.toggle('danger', tempF >= 176);
+        }
         
         // Update the temperature chart with server-stored history
         if (data.tempHistory) {
