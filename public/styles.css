@@ -1326,3 +1326,61 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ===== Temperature Graph ===== */
+.temp-graph-stat {
+  grid-column: span 2;
+}
+
+.temp-graph-container {
+  position: relative;
+  height: 120px;
+  margin-top: 8px;
+}
+
+.temp-graph-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.temp-zones {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+.zone-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zone-label::before {
+  content: '';
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.zone-label.safe::before {
+  background: #10b981;
+}
+
+.zone-label.caution::before {
+  background: #f59e0b;
+}
+
+.zone-label.danger::before {
+  background: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .temp-graph-stat {
+    grid-column: span 1;
+  }
+  
+  .temp-graph-container {
+    height: 100px;
+  }
+}

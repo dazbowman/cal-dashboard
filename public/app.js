@@ -872,6 +872,9 @@ class CalDashboard {
     // Load DNA file
     this.loadDnaFile('SOUL.md');
     
+    // Initialize temperature chart
+    this.initTempChart();
+    
     // Load Pi stats
     this.loadPiStats();
     
@@ -881,6 +884,132 @@ class CalDashboard {
     // Start periodic updates
     setInterval(() => this.loadPiStats(), 5000); // Every 5 seconds
     setInterval(() => this.loadCronMini(), 30000); // Every 30 seconds
+  }
+  
+  // Temperature Chart
+  initTempChart() {
+    this.tempHistory = [];
+    this.maxTempPoints = 60; // 5 minutes at 5-second intervals
+    
+    const ctx = document.getElementById('temp-chart');
+    if (!ctx) return;
+    
+    // Temperature thresholds in Fahrenheit
+    this.tempThresholds = {
+      safe: 140,      // 60°C
+      caution: 158,   // 70°C  
+      danger: 176,    // 80°C
+      max: 185        // 85°C
+    };
+    
+    this.tempChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Temperature °F',
+          data: [],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        scales: {
+          x: {
+            display: false
+          },
+          y: {
+            min: 80,
+            max: 200,
+            grid: {
+              color: 'rgba(255,255,255,0.1)'
+            },
+            ticks: {
+              color: 'var(--text-secondary)',
+              font: { size: 10 },
+              callback: (value) => value + '°F'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          annotation: {
+            annotations: {
+              cautionLine: {
+                type: 'line',
+                yMin: 158,
+                yMax: 158,
+                borderColor: 'rgba(245, 158, 11, 0.5)',
+                borderWidth: 1,
+                borderDash: [5, 5]
+              },
+              dangerLine: {
+                type: 'line',
+                yMin: 176,
+                yMax: 176,
+                borderColor: 'rgba(239, 68, 68, 0.5)',
+                borderWidth: 1,
+                borderDash: [5, 5]
+              },
+              dangerZone: {
+                type: 'box',
+                yMin: 176,
+                yMax: 200,
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 0
+              },
+              cautionZone: {
+                type: 'box',
+                yMin: 158,
+                yMax: 176,
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderWidth: 0
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  updateTempChart(tempF) {
+    if (!this.tempChart) return;
+    
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    // Add new data point
+    this.tempHistory.push({ time: timeLabel, temp: tempF });
+    
+    // Keep only last 5 minutes (60 points at 5-second intervals)
+    if (this.tempHistory.length > this.maxTempPoints) {
+      this.tempHistory.shift();
+    }
+    
+    // Update chart data
+    this.tempChart.data.labels = this.tempHistory.map(p => p.time);
+    this.tempChart.data.datasets[0].data = this.tempHistory.map(p => p.temp);
+    
+    // Update line color based on current temp
+    let lineColor = '#10b981'; // green - safe
+    if (tempF >= this.tempThresholds.danger) {
+      lineColor = '#ef4444'; // red - danger
+    } else if (tempF >= this.tempThresholds.caution) {
+      lineColor = '#f59e0b'; // yellow - caution
+    }
+    
+    this.tempChart.data.datasets[0].borderColor = lineColor;
+    this.tempChart.data.datasets[0].backgroundColor = lineColor.replace(')', ', 0.1)').replace('rgb', 'rgba');
+    
+    this.tempChart.update('none'); // No animation for smooth updates
   }
   
   // Pi System Stats
@@ -902,16 +1031,15 @@ class CalDashboard {
         cpuBar.classList.toggle('danger', data.cpu.usage > 90);
       }
       
-      // Temperature
+      // Temperature - convert to Fahrenheit
       const tempEl = document.getElementById('pi-temp');
-      const tempBar = document.getElementById('pi-temp-bar');
       if (tempEl && data.cpu.temp !== 'N/A') {
-        const temp = parseFloat(data.cpu.temp);
-        tempEl.textContent = temp + '°C';
-        // Pi throttles at 80°C, warning at 70°C
-        tempBar.style.width = Math.min((temp / 85) * 100, 100) + '%';
-        tempBar.classList.toggle('warning', temp > 65);
-        tempBar.classList.toggle('danger', temp > 75);
+        const tempC = parseFloat(data.cpu.temp);
+        const tempF = (tempC * 9/5) + 32;
+        tempEl.textContent = tempF.toFixed(1) + '°F';
+        
+        // Update the temperature chart
+        this.updateTempChart(tempF);
       }
       
       // Memory

@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 </head>
 <body>
   <div class="app">
@@ -107,14 +109,19 @@
                   <div class="pi-stat-fill cpu-fill" id="pi-cpu-bar" style="width: 0%"></div>
                 </div>
               </div>
-              <div class="pi-stat">
+              <div class="pi-stat temp-graph-stat">
                 <div class="pi-stat-icon">🌡️</div>
                 <div class="pi-stat-info">
                   <span class="pi-stat-value" id="pi-temp">--</span>
-                  <span class="pi-stat-label">Temperature</span>
+                  <span class="pi-stat-label">Temperature (5 min)</span>
                 </div>
-                <div class="pi-stat-bar">
-                  <div class="pi-stat-fill temp-fill" id="pi-temp-bar" style="width: 0%"></div>
+                <div class="temp-graph-container">
+                  <canvas id="temp-chart"></canvas>
+                  <div class="temp-zones">
+                    <span class="zone-label safe">Safe &lt;140°F</span>
+                    <span class="zone-label caution">Caution 158°F</span>
+                    <span class="zone-label danger">Danger 176°F+</span>
+                  </div>
                 </div>
               </div>
               <div class="pi-stat">
