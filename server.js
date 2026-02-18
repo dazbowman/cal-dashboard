@@ -436,27 +436,9 @@ wss.on('connection', (clientWs) => {
           return;
         }
         
-        // Chat event - contains the final message
+        // Chat event - we skip this since agent events handle streaming
+        // The chunks build up the message, no need for duplicate final message
         if (msg.event === 'chat') {
-          const message = payload.message;
-          if (message && message.role === 'assistant') {
-            // Extract text from content array
-            let text = '';
-            if (Array.isArray(message.content)) {
-              const textBlocks = message.content.filter(b => b.type === 'text');
-              text = textBlocks.map(b => b.text || '').join('');
-            } else if (typeof message.content === 'string') {
-              text = message.content;
-            }
-            
-            // Only send final message if we have state=final or complete text
-            if (payload.state === 'final' && text) {
-              clientWs.send(JSON.stringify({
-                type: 'response',
-                content: text
-              }));
-            }
-          }
           return;
         }
         
