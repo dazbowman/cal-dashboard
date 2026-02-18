@@ -108,14 +108,15 @@
                       <stop offset="100%" style="stop-color:#ef4444"/>
                     </linearGradient>
                   </defs>
-                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="8" stroke-linecap="round"/>
-                  <path class="gauge-fill" id="cpu-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-cpu)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 157"/>
-                  <text class="gauge-value" id="pi-cpu" x="60" y="55" text-anchor="middle">--%</text>
+                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="12" stroke-linecap="round"/>
+                  <path class="gauge-fill" id="cpu-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-cpu)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 157"/>
+                  <text class="gauge-value" id="pi-cpu" x="60" y="58" text-anchor="middle">--%</text>
                 </svg>
               </div>
             </div>
             <div class="card stat-card gauge-card">
               <span class="stat-label">Memory</span>
+              <span class="stat-detail" id="pi-memory-detail">-- / --</span>
               <div class="gauge-container">
                 <svg class="gauge" viewBox="0 0 120 70">
                   <defs>
@@ -125,9 +126,9 @@
                       <stop offset="100%" style="stop-color:#ef4444"/>
                     </linearGradient>
                   </defs>
-                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="8" stroke-linecap="round"/>
-                  <path class="gauge-fill" id="memory-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-mem)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 157"/>
-                  <text class="gauge-value" id="pi-memory" x="60" y="55" text-anchor="middle">--%</text>
+                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="12" stroke-linecap="round"/>
+                  <path class="gauge-fill" id="memory-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-mem)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 157"/>
+                  <text class="gauge-value" id="pi-memory" x="60" y="58" text-anchor="middle">--%</text>
                 </svg>
               </div>
             </div>

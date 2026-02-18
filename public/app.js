@@ -1057,12 +1057,20 @@ class CalDashboard {
       // Memory Gauge
       const memEl = document.getElementById('pi-memory');
       const memGauge = document.getElementById('memory-gauge');
+      const memDetail = document.getElementById('pi-memory-detail');
       if (memEl && memGauge) {
         const memPercent = Math.min(data.memory.percent, 100);
         memEl.textContent = memPercent.toFixed(0) + '%';
         const arcLength = 157;
         const filled = (memPercent / 100) * arcLength;
         memGauge.setAttribute('stroke-dasharray', `${filled} ${arcLength}`);
+        
+        // Update detail text (convert MB to GB)
+        if (memDetail) {
+          const usedGB = (data.memory.used / 1024).toFixed(1);
+          const totalGB = (data.memory.total / 1024).toFixed(0);
+          memDetail.textContent = `${usedGB}GB / ${totalGB}GB`;
+        }
       }
       
       // Disk
