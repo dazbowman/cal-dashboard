@@ -381,20 +381,62 @@ wss.on('connection', (clientWs) => {
       
       // Handle streaming events
       if (msg.type === 'event') {
+        const payload = msg.payload || {};
+        
+        // Agent event - this is the main response format
+        if (msg.event === 'agent') {
+          // Extract text from various possible locations
+          let text = '';
+          if (typeof payload.text === 'string') {
+            text = payload.text;
+          } else if (typeof payload.content === 'string') {
+            text = payload.content;
+          } else if (payload.message?.content) {
+            text = payload.message.content;
+          } else if (Array.isArray(payload.messages)) {
+            // Get assistant messages
+            const assistantMsgs = payload.messages.filter(m => m.role === 'assistant');
+            if (assistantMsgs.length > 0) {
+              const lastMsg = assistantMsgs[assistantMsgs.length - 1];
+              text = lastMsg.content || lastMsg.text || '';
+            }
+          }
+          
+          if (text) {
+            clientWs.send(JSON.stringify({
+              type: 'response',
+              content: text,
+              state: payload.state
+            }));
+          }
+          
+          // Send state updates
+          if (payload.state) {
+            clientWs.send(JSON.stringify({
+              type: 'status',
+              state: payload.state
+            }));
+          }
+          return;
+        }
+        
         if (msg.event === 'chat' || msg.event === 'chat.chunk') {
-          clientWs.send(JSON.stringify({
-            type: 'chunk',
-            content: msg.payload?.text || msg.payload?.content || ''
-          }));
+          const text = payload.text || payload.content || payload.delta?.content || '';
+          if (text) {
+            clientWs.send(JSON.stringify({
+              type: 'chunk',
+              content: text
+            }));
+          }
         } else if (msg.event === 'chat.done' || msg.event === 'agent.done') {
           clientWs.send(JSON.stringify({
             type: 'done',
-            content: msg.payload?.text || msg.payload?.content || ''
+            content: payload.text || payload.content || ''
           }));
         } else if (msg.event === 'status') {
           clientWs.send(JSON.stringify({
             type: 'status',
-            state: msg.payload?.state
+            state: payload.state
           }));
         }
         return;

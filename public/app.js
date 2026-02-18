@@ -134,7 +134,12 @@ class CalDashboard {
     }
     
     if (data.type === 'message' || data.type === 'response') {
-      this.addChatMessage(data.content || data.text || JSON.stringify(data), 'assistant');
+      const content = data.content || data.text || '';
+      if (content && typeof content === 'string') {
+        this.addChatMessage(content, 'assistant');
+      } else {
+        console.log('Received non-string response:', data);
+      }
     }
     
     if (data.type === 'status') {
@@ -873,9 +878,11 @@ class CalDashboard {
   // Pi System Stats
   async loadPiStats() {
     try {
+      console.log('Loading Pi stats...');
       const res = await fetch('/api/system');
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) throw new Error('Failed to fetch: ' + res.status);
       const data = await res.json();
+      console.log('Pi stats loaded:', data);
       
       // CPU
       const cpuEl = document.getElementById('pi-cpu');
