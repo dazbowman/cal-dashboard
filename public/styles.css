@@ -1182,7 +1182,7 @@ body {
   background: var(--bg-primary);
   border-radius: 6px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .stat-bar-fill {
@@ -1233,7 +1233,7 @@ body {
 
 /* Temperature card with mini chart */
 .temp-card {
-  padding: 16px;
+  padding: 10px 14px;
 }
 
 .temp-mini-chart {
