@@ -407,40 +407,55 @@ wss.on('connection', (clientWs) => {
       // Handle streaming events
       if (msg.type === 'event') {
         const payload = msg.payload || {};
+        console.log('Event received:', msg.event);
+        if (msg.event === 'chat' && payload.message) {
+          console.log('Chat message:', JSON.stringify(payload.message).slice(0, 300));
+        }
+        if (msg.event === 'agent' && payload.data) {
+          console.log('Agent data:', JSON.stringify(payload.data).slice(0, 300));
+        }
         
-        // Agent event - this is the main response format
+        // Agent event - streaming response chunks
         if (msg.event === 'agent') {
-          // Extract text from various possible locations
-          let text = '';
-          if (typeof payload.text === 'string') {
-            text = payload.text;
-          } else if (typeof payload.content === 'string') {
-            text = payload.content;
-          } else if (payload.message?.content) {
-            text = payload.message.content;
-          } else if (Array.isArray(payload.messages)) {
-            // Get assistant messages
-            const assistantMsgs = payload.messages.filter(m => m.role === 'assistant');
-            if (assistantMsgs.length > 0) {
-              const lastMsg = assistantMsgs[assistantMsgs.length - 1];
-              text = lastMsg.content || lastMsg.text || '';
+          const data = payload.data || {};
+          
+          // Streaming text chunks - use delta for incremental updates
+          if (data.delta) {
+            clientWs.send(JSON.stringify({
+              type: 'chunk',
+              content: data.delta
+            }));
+          }
+          
+          // End of stream
+          if (data.phase === 'end') {
+            clientWs.send(JSON.stringify({
+              type: 'done'
+            }));
+          }
+          return;
+        }
+        
+        // Chat event - contains the final message
+        if (msg.event === 'chat') {
+          const message = payload.message;
+          if (message && message.role === 'assistant') {
+            // Extract text from content array
+            let text = '';
+            if (Array.isArray(message.content)) {
+              const textBlocks = message.content.filter(b => b.type === 'text');
+              text = textBlocks.map(b => b.text || '').join('');
+            } else if (typeof message.content === 'string') {
+              text = message.content;
             }
-          }
-          
-          if (text) {
-            clientWs.send(JSON.stringify({
-              type: 'response',
-              content: text,
-              state: payload.state
-            }));
-          }
-          
-          // Send state updates
-          if (payload.state) {
-            clientWs.send(JSON.stringify({
-              type: 'status',
-              state: payload.state
-            }));
+            
+            // Only send final message if we have state=final or complete text
+            if (payload.state === 'final' && text) {
+              clientWs.send(JSON.stringify({
+                type: 'response',
+                content: text
+              }));
+            }
           }
           return;
         }
