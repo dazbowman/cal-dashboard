@@ -290,40 +290,44 @@ wss.on('connection', (clientWs) => {
   let sessionKey = 'agent:main:main';
   
   gatewayWs.on('open', () => {
-    console.log('Connected to OpenClaw gateway');
-    
-    // Send proper connect request per protocol
-    const connectId = generateId();
-    pendingRequests.set(connectId, 'connect');
-    
-    gatewayWs.send(JSON.stringify({
-      type: 'req',
-      id: connectId,
-      method: 'connect',
-      params: {
-        minProtocol: 3,
-        maxProtocol: 3,
-        client: {
-          id: 'cal-dashboard',
-          version: '1.0.0',
-          platform: 'web',
-          mode: 'webchat'
-        },
-        role: 'operator',
-        scopes: ['operator.read', 'operator.write'],
-        caps: [],
-        commands: [],
-        permissions: {},
-        auth: { token: GATEWAY_TOKEN },
-        locale: 'en-US',
-        userAgent: 'cal-dashboard/1.0.0'
-      }
-    }));
+    console.log('Connected to OpenClaw gateway, waiting for challenge...');
+    // Don't send connect yet - wait for connect.challenge event
   });
   
   gatewayWs.on('message', (data) => {
     try {
       const msg = JSON.parse(data.toString());
+      
+      // Handle connect.challenge event - must send connect request after this
+      if (msg.type === 'event' && msg.event === 'connect.challenge') {
+        console.log('Received connect.challenge, sending connect request...');
+        const connectId = generateId();
+        pendingRequests.set(connectId, 'connect');
+        
+        gatewayWs.send(JSON.stringify({
+          type: 'req',
+          id: connectId,
+          method: 'connect',
+          params: {
+            minProtocol: 3,
+            maxProtocol: 3,
+            client: {
+              id: 'cli',
+              version: '2026.2.3',
+              platform: 'linux',
+              mode: 'ui'
+            },
+            role: 'operator',
+            scopes: ['operator.read', 'operator.write'],
+            caps: [],
+            commands: [],
+            permissions: {},
+            auth: { token: GATEWAY_TOKEN },
+            locale: 'en-US'
+          }
+        }));
+        return;
+      }
       
       // Handle connect response
       if (msg.type === 'res' && pendingRequests.get(msg.id) === 'connect') {
