@@ -155,6 +155,14 @@ class CalDashboard {
     }
     
     if (data.type === 'done') {
+      // Remove streaming class from message to finalize it
+      ['main-chat-messages', 'side-chat-messages'].forEach(id => {
+        const container = document.getElementById(id);
+        const streamingMsg = container.querySelector('.chat-message.streaming');
+        if (streamingMsg) {
+          streamingMsg.classList.remove('streaming');
+        }
+      });
       this.currentStreamingMessage = null;
     }
     
