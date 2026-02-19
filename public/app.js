@@ -702,12 +702,6 @@ class CalDashboard {
           <div class="skill-card" data-skill="${this.escapeHtml(skill.name)}">
             <div class="skill-header">
               <span class="skill-emoji">${skill.emoji || '📦'}</span>
-              <div class="skill-badges">
-                <span class="skill-badge ${skill.ready ? 'ready' : 'missing'}">
-                  ${skill.ready ? '✓ Ready' : '✗ Missing'}
-                </span>
-                <span class="skill-badge source-${skill.source}">${skill.source}</span>
-              </div>
             </div>
             <div class="skill-name">${this.escapeHtml(skill.name)}</div>
             <div class="skill-desc">${this.escapeHtml(skill.description)}</div>

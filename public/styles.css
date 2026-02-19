@@ -1495,51 +1495,12 @@ body {
 }
 
 .skill-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 12px;
 }
 
 .skill-emoji {
   font-size: 32px;
   line-height: 1;
-}
-
-.skill-badges {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-end;
-}
-
-.skill-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.skill-badge.ready {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-}
-
-.skill-badge.missing {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-}
-
-.skill-badge.source-bundled {
-  background: rgba(88, 166, 255, 0.15);
-  color: #58a6ff;
-}
-
-.skill-badge.source-managed {
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
 }
 
 .skill-name {
