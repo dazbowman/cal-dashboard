@@ -152,17 +152,232 @@ app.get('/api/memory', (req, res) => {
   }
 });
 
+// Helper to parse SKILL.md frontmatter
+function parseSkillMd(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    
+    if (!frontmatterMatch) {
+      return { name: '', description: '', content };
+    }
+    
+    const frontmatter = frontmatterMatch[1];
+    let name = '';
+    let description = '';
+    let emoji = '';
+    
+    // Try to parse as YAML-ish
+    const nameMatch = frontmatter.match(/^name:\s*(.+?)$/m);
+    const descMatch = frontmatter.match(/^description:\s*(.+?)$/m);
+    
+    // Extract emoji from metadata field (could be JSON or YAML-like)
+    const metaMatch = frontmatter.match(/metadata:\s*\{[^}]*"emoji":\s*"([^"]+)"/);
+    
+    if (nameMatch) name = nameMatch[1].trim();
+    if (descMatch) description = descMatch[1].trim();
+    if (metaMatch) emoji = metaMatch[1].trim();
+    
+    return { name, description, emoji, content };
+  } catch (e) {
+    return { name: '', description: '', content: '' };
+  }
+}
+
+// Helper to get skill status from `openclaw skills list`
+function getSkillStatuses() {
+  try {
+    const { execSync } = require('child_process');
+    const output = execSync('openclaw skills list', { encoding: 'utf8' });
+    
+    const statuses = {};
+    const lines = output.split('\n');
+    
+    for (const line of lines) {
+      // Parse table rows - look for ✓ ready or ✗ missing
+      const readyMatch = line.match(/│\s*✓\s+ready\s+│\s+(?:[\w\s]*?\s+)?(\S+)\s+│/);
+      const missingMatch = line.match(/│\s*✗\s+missing\s+│\s+(?:[\w\s]*?\s+)?(\S+)\s+│/);
+      
+      if (readyMatch) {
+        statuses[readyMatch[1]] = true;
+      } else if (missingMatch) {
+        statuses[missingMatch[1]] = false;
+      }
+    }
+    
+    return statuses;
+  } catch (e) {
+    console.error('Failed to get skill statuses:', e.message);
+    return {};
+  }
+}
+
 // API: List skills
 app.get('/api/skills', (req, res) => {
-  const skillsDir = path.join(OPENCLAW_BASE, 'agents', 'skills');
   try {
-    if (!fs.existsSync(skillsDir)) {
-      return res.json({ skills: [] });
+    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
+    const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
+    
+    const skills = [];
+    const statuses = getSkillStatuses();
+    
+    // Scan bundled skills
+    if (fs.existsSync(bundledDir)) {
+      const dirs = fs.readdirSync(bundledDir, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+      
+      for (const dir of dirs) {
+        const skillPath = path.join(bundledDir, dir.name);
+        const skillMdPath = path.join(skillPath, 'SKILL.md');
+        
+        if (fs.existsSync(skillMdPath)) {
+          const { name, description, emoji } = parseSkillMd(skillMdPath);
+          skills.push({
+            name: name || dir.name,
+            description: description || 'No description',
+            emoji: emoji || '📦',
+            source: 'bundled',
+            ready: statuses[dir.name] === true,
+            location: skillPath
+          });
+        }
+      }
     }
-    const skills = fs.readdirSync(skillsDir, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name);
+    
+    // Scan managed (user-installed) skills - check nested directories
+    if (fs.existsSync(managedBaseDir)) {
+      const scanManagedDir = (dir) => {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        for (const item of items) {
+          if (item.isDirectory()) {
+            const skillPath = path.join(dir, item.name);
+            const skillMdPath = path.join(skillPath, 'SKILL.md');
+            
+            if (fs.existsSync(skillMdPath)) {
+              const { name, description, emoji } = parseSkillMd(skillMdPath);
+              skills.push({
+                name: name || item.name,
+                description: description || 'No description',
+                emoji: emoji || '📦',
+                source: 'managed',
+                ready: statuses[item.name] === true,
+                location: skillPath
+              });
+            } else {
+              // Recursively scan subdirectories
+              scanManagedDir(skillPath);
+            }
+          }
+        }
+      };
+      scanManagedDir(managedBaseDir);
+    }
+    
     res.json({ skills });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Get skill details
+app.get('/api/skills/:skillName', (req, res) => {
+  const { skillName } = req.params;
+  
+  try {
+    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
+    const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
+    
+    // Try bundled first
+    let skillMdPath = path.join(bundledDir, skillName, 'SKILL.md');
+    let source = 'bundled';
+    
+    if (!fs.existsSync(skillMdPath)) {
+      // Try managed - search recursively
+      const findSkill = (dir) => {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        for (const item of items) {
+          if (item.isDirectory()) {
+            if (item.name === skillName) {
+              const testPath = path.join(dir, item.name, 'SKILL.md');
+              if (fs.existsSync(testPath)) {
+                return testPath;
+              }
+            }
+            const result = findSkill(path.join(dir, item.name));
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      
+      skillMdPath = findSkill(managedBaseDir);
+      source = 'managed';
+    }
+    
+    if (!skillMdPath || !fs.existsSync(skillMdPath)) {
+      return res.status(404).json({ error: 'Skill not found' });
+    }
+    
+    const markdown = fs.readFileSync(skillMdPath, 'utf8');
+    const { name } = parseSkillMd(skillMdPath);
+    
+    res.json({
+      name: name || skillName,
+      markdown,
+      location: skillMdPath,
+      source
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Update skill file
+app.put('/api/skills/:skillName', (req, res) => {
+  const { skillName } = req.params;
+  const { markdown } = req.body;
+  
+  if (!markdown) {
+    return res.status(400).json({ error: 'Markdown content required' });
+  }
+  
+  try {
+    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
+    const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
+    
+    // Try bundled first
+    let skillMdPath = path.join(bundledDir, skillName, 'SKILL.md');
+    
+    if (!fs.existsSync(skillMdPath)) {
+      // Try managed - search recursively
+      const findSkill = (dir) => {
+        if (!fs.existsSync(dir)) return null;
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        for (const item of items) {
+          if (item.isDirectory()) {
+            if (item.name === skillName) {
+              const testPath = path.join(dir, item.name, 'SKILL.md');
+              if (fs.existsSync(testPath)) {
+                return testPath;
+              }
+            }
+            const result = findSkill(path.join(dir, item.name));
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      
+      skillMdPath = findSkill(managedBaseDir);
+    }
+    
+    if (!skillMdPath || !fs.existsSync(skillMdPath)) {
+      return res.status(404).json({ error: 'Skill not found' });
+    }
+    
+    fs.writeFileSync(skillMdPath, markdown, 'utf8');
+    
+    res.json({ success: true, location: skillMdPath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

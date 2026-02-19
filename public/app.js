@@ -696,18 +696,132 @@ class CalDashboard {
       const data = await res.json();
       
       if (data.skills && data.skills.length > 0) {
+        this.skills = data.skills; // Store for later use
+        
         grid.innerHTML = data.skills.map(skill => `
-          <div class="skill-card">
-            <div class="skill-name">${skill}</div>
-            <div class="skill-desc">Skill module</div>
+          <div class="skill-card" data-skill="${this.escapeHtml(skill.name)}">
+            <div class="skill-header">
+              <span class="skill-emoji">${skill.emoji || '📦'}</span>
+              <div class="skill-badges">
+                <span class="skill-badge ${skill.ready ? 'ready' : 'missing'}">
+                  ${skill.ready ? '✓ Ready' : '✗ Missing'}
+                </span>
+                <span class="skill-badge source-${skill.source}">${skill.source}</span>
+              </div>
+            </div>
+            <div class="skill-name">${this.escapeHtml(skill.name)}</div>
+            <div class="skill-desc">${this.escapeHtml(skill.description)}</div>
           </div>
         `).join('');
+        
+        // Add click handlers
+        document.querySelectorAll('.skill-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const skillName = card.dataset.skill;
+            this.openSkillEditor(skillName);
+          });
+        });
       } else {
         grid.innerHTML = '<div class="empty-state">No skills found</div>';
       }
     } catch (e) {
       grid.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
     }
+  }
+  
+  async openSkillEditor(skillName) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'skill-editor-overlay';
+    overlay.innerHTML = `
+      <div class="skill-editor-modal">
+        <div class="skill-editor-header">
+          <h2>${this.escapeHtml(skillName)}</h2>
+          <button class="close-btn" id="close-skill-editor">✕</button>
+        </div>
+        <div class="skill-editor-body">
+          <textarea class="skill-markdown-editor" id="skill-markdown-editor" placeholder="Loading..."></textarea>
+        </div>
+        <div class="skill-editor-footer">
+          <span class="save-status" id="skill-save-status"></span>
+          <div class="skill-editor-actions">
+            <button class="btn btn-secondary" id="cancel-skill-edit">Cancel</button>
+            <button class="btn btn-primary" id="save-skill-btn">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Load skill content
+    const editor = document.getElementById('skill-markdown-editor');
+    try {
+      const res = await fetch(`/api/skills/${encodeURIComponent(skillName)}`);
+      const data = await res.json();
+      editor.value = data.markdown || 'Skill not found';
+      this.currentSkillLocation = data.location;
+    } catch (e) {
+      editor.value = `Error loading skill: ${e.message}`;
+    }
+    
+    // Event handlers
+    document.getElementById('close-skill-editor').addEventListener('click', () => {
+      overlay.remove();
+    });
+    
+    document.getElementById('cancel-skill-edit').addEventListener('click', () => {
+      overlay.remove();
+    });
+    
+    document.getElementById('save-skill-btn').addEventListener('click', async () => {
+      await this.saveSkill(skillName, editor.value);
+    });
+    
+    // Close on overlay click (but not modal click)
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+    
+    // ESC to close
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        overlay.remove();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  }
+  
+  async saveSkill(skillName, markdown) {
+    const status = document.getElementById('skill-save-status');
+    
+    try {
+      const res = await fetch(`/api/skills/${encodeURIComponent(skillName)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown })
+      });
+      
+      if (res.ok) {
+        status.textContent = '✓ Saved!';
+        status.className = 'save-status success';
+        
+        // Close modal after brief delay
+        setTimeout(() => {
+          document.querySelector('.skill-editor-overlay')?.remove();
+        }, 1000);
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (e) {
+      status.textContent = `✗ Error: ${e.message}`;
+      status.className = 'save-status error';
+    }
+    
+    setTimeout(() => { status.textContent = ''; }, 3000);
   }
   
   // Cron Jobs
