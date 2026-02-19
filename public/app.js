@@ -560,7 +560,10 @@ class CalDashboard {
   
   async loadDnaFile(filename) {
     const editor = document.getElementById('dna-editor');
-    editor.value = 'Loading...';
+    
+    // Smooth fade transition
+    editor.style.opacity = '0.5';
+    editor.style.transition = 'opacity 0.2s ease';
     
     try {
       const res = await fetch(`/api/file?path=${encodeURIComponent(filename)}`);
@@ -569,11 +572,27 @@ class CalDashboard {
     } catch (e) {
       editor.value = `Error loading file: ${e.message}`;
     }
+    
+    // Fade back in
+    setTimeout(() => {
+      editor.style.opacity = '1';
+    }, 10);
+    
+    // Clear transition after animation completes
+    setTimeout(() => {
+      editor.style.transition = 'none';
+    }, 250);
   }
   
   async saveDnaFile() {
     const editor = document.getElementById('dna-editor');
     const status = document.getElementById('dna-save-status');
+    const btn = document.getElementById('save-dna-btn');
+    
+    // Visual feedback: disable button during save
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
     
     try {
       const res = await fetch('/api/file', {
@@ -586,17 +605,28 @@ class CalDashboard {
       });
       
       if (res.ok) {
-        status.textContent = 'Saved!';
+        status.innerHTML = '✓ Saved';
         status.className = 'save-status success';
+        btn.textContent = 'Saved ✓';
+        
+        // Subtle pulse animation on success
+        editor.style.opacity = '0.95';
+        setTimeout(() => { editor.style.opacity = '1'; }, 150);
       } else {
         throw new Error('Save failed');
       }
     } catch (e) {
-      status.textContent = `Error: ${e.message}`;
+      status.innerHTML = `✗ ${e.message}`;
       status.className = 'save-status error';
+      btn.textContent = 'Error - Try Again';
     }
     
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    // Reset button state
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      status.textContent = '';
+    }, 2500);
   }
   
   // Memory Editor
@@ -661,6 +691,12 @@ class CalDashboard {
     
     const editor = document.getElementById('memory-editor');
     const status = document.getElementById('memory-save-status');
+    const btn = document.getElementById('save-memory-btn');
+    
+    // Visual feedback: disable button during save
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
     
     try {
       const res = await fetch('/api/file', {
@@ -673,17 +709,28 @@ class CalDashboard {
       });
       
       if (res.ok) {
-        status.textContent = 'Saved!';
+        status.innerHTML = '✓ Saved';
         status.className = 'save-status success';
+        btn.textContent = 'Saved ✓';
+        
+        // Subtle pulse animation on success
+        editor.style.opacity = '0.95';
+        setTimeout(() => { editor.style.opacity = '1'; }, 150);
       } else {
         throw new Error('Save failed');
       }
     } catch (e) {
-      status.textContent = `Error: ${e.message}`;
+      status.innerHTML = `✗ ${e.message}`;
       status.className = 'save-status error';
+      btn.textContent = 'Error - Try Again';
     }
     
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    // Reset button state
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      status.textContent = '';
+    }, 2500);
   }
   
   // Skills
