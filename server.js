@@ -212,37 +212,13 @@ function getSkillStatuses() {
   }
 }
 
-// API: List skills
+// API: List skills - only user-installed skills from ~/.openclaw/skills
 app.get('/api/skills', (req, res) => {
   try {
-    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
     const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
     
     const skills = [];
     const statuses = getSkillStatuses();
-    
-    // Scan bundled skills
-    if (fs.existsSync(bundledDir)) {
-      const dirs = fs.readdirSync(bundledDir, { withFileTypes: true })
-        .filter(d => d.isDirectory());
-      
-      for (const dir of dirs) {
-        const skillPath = path.join(bundledDir, dir.name);
-        const skillMdPath = path.join(skillPath, 'SKILL.md');
-        
-        if (fs.existsSync(skillMdPath)) {
-          const { name, description, emoji } = parseSkillMd(skillMdPath);
-          skills.push({
-            name: name || dir.name,
-            description: description || 'No description',
-            emoji: emoji || '📦',
-            source: 'bundled',
-            ready: statuses[dir.name] === true,
-            location: skillPath
-          });
-        }
-      }
-    }
     
     // Scan managed (user-installed) skills - check nested directories
     if (fs.existsSync(managedBaseDir)) {
@@ -279,40 +255,33 @@ app.get('/api/skills', (req, res) => {
   }
 });
 
-// API: Get skill details
+// API: Get skill details - only from user-installed skills
 app.get('/api/skills/:skillName', (req, res) => {
   const { skillName } = req.params;
   
   try {
-    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
     const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
     
-    // Try bundled first
-    let skillMdPath = path.join(bundledDir, skillName, 'SKILL.md');
-    let source = 'bundled';
-    
-    if (!fs.existsSync(skillMdPath)) {
-      // Try managed - search recursively
-      const findSkill = (dir) => {
-        const items = fs.readdirSync(dir, { withFileTypes: true });
-        for (const item of items) {
-          if (item.isDirectory()) {
-            if (item.name === skillName) {
-              const testPath = path.join(dir, item.name, 'SKILL.md');
-              if (fs.existsSync(testPath)) {
-                return testPath;
-              }
+    // Search managed skills recursively
+    const findSkill = (dir) => {
+      if (!fs.existsSync(dir)) return null;
+      const items = fs.readdirSync(dir, { withFileTypes: true });
+      for (const item of items) {
+        if (item.isDirectory()) {
+          if (item.name === skillName) {
+            const testPath = path.join(dir, item.name, 'SKILL.md');
+            if (fs.existsSync(testPath)) {
+              return testPath;
             }
-            const result = findSkill(path.join(dir, item.name));
-            if (result) return result;
           }
+          const result = findSkill(path.join(dir, item.name));
+          if (result) return result;
         }
-        return null;
-      };
-      
-      skillMdPath = findSkill(managedBaseDir);
-      source = 'managed';
-    }
+      }
+      return null;
+    };
+    
+    const skillMdPath = findSkill(managedBaseDir);
     
     if (!skillMdPath || !fs.existsSync(skillMdPath)) {
       return res.status(404).json({ error: 'Skill not found' });
@@ -325,14 +294,14 @@ app.get('/api/skills/:skillName', (req, res) => {
       name: name || skillName,
       markdown,
       location: skillMdPath,
-      source
+      source: 'managed'
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// API: Update skill file
+// API: Update skill file - only for user-installed skills
 app.put('/api/skills/:skillName', (req, res) => {
   const { skillName } = req.params;
   const { markdown } = req.body;
@@ -342,34 +311,28 @@ app.put('/api/skills/:skillName', (req, res) => {
   }
   
   try {
-    const bundledDir = '/home/dbowman/.npm-global/lib/node_modules/openclaw/skills';
     const managedBaseDir = path.join(OPENCLAW_BASE, 'skills');
     
-    // Try bundled first
-    let skillMdPath = path.join(bundledDir, skillName, 'SKILL.md');
-    
-    if (!fs.existsSync(skillMdPath)) {
-      // Try managed - search recursively
-      const findSkill = (dir) => {
-        if (!fs.existsSync(dir)) return null;
-        const items = fs.readdirSync(dir, { withFileTypes: true });
-        for (const item of items) {
-          if (item.isDirectory()) {
-            if (item.name === skillName) {
-              const testPath = path.join(dir, item.name, 'SKILL.md');
-              if (fs.existsSync(testPath)) {
-                return testPath;
-              }
+    // Search managed skills recursively
+    const findSkill = (dir) => {
+      if (!fs.existsSync(dir)) return null;
+      const items = fs.readdirSync(dir, { withFileTypes: true });
+      for (const item of items) {
+        if (item.isDirectory()) {
+          if (item.name === skillName) {
+            const testPath = path.join(dir, item.name, 'SKILL.md');
+            if (fs.existsSync(testPath)) {
+              return testPath;
             }
-            const result = findSkill(path.join(dir, item.name));
-            if (result) return result;
           }
+          const result = findSkill(path.join(dir, item.name));
+          if (result) return result;
         }
-        return null;
-      };
-      
-      skillMdPath = findSkill(managedBaseDir);
-    }
+      }
+      return null;
+    };
+    
+    const skillMdPath = findSkill(managedBaseDir);
     
     if (!skillMdPath || !fs.existsSync(skillMdPath)) {
       return res.status(404).json({ error: 'Skill not found' });
