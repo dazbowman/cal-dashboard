@@ -278,6 +278,26 @@
           <h1>Chat with Cal</h1>
         </div>
         <div class="chat-container">
+          <!-- Session Status Bar -->
+          <div class="session-status-bar" id="main-session-status">
+            <div class="status-model">
+              <span class="status-label">Model</span>
+              <span class="status-value" id="main-status-model">--</span>
+            </div>
+            <div class="status-thinking">
+              <span class="status-label">Think</span>
+              <span class="status-value" id="main-status-thinking">--</span>
+            </div>
+            <div class="status-context">
+              <span class="status-label">Context</span>
+              <div class="context-bar-container">
+                <div class="context-bar" id="main-context-bar">
+                  <div class="context-bar-fill" id="main-context-fill"></div>
+                </div>
+                <span class="context-text" id="main-context-text">--</span>
+              </div>
+            </div>
+          </div>
           <div class="chat-messages" id="main-chat-messages"></div>
           <div class="chat-input-area" id="main-chat-input-area">
             <button class="voice-btn" id="main-voice-btn" title="Hold to record">🎤</button>
@@ -451,6 +471,20 @@
         <button class="minimize-btn" id="minimize-chat">−</button>
       </div>
       <div class="chat-panel-body">
+        <!-- Session Status Bar (Side Panel) -->
+        <div class="session-status-bar compact" id="side-session-status">
+          <div class="status-model">
+            <span class="status-value" id="side-status-model">--</span>
+          </div>
+          <div class="status-context">
+            <div class="context-bar-container">
+              <div class="context-bar" id="side-context-bar">
+                <div class="context-bar-fill" id="side-context-fill"></div>
+              </div>
+              <span class="context-text" id="side-context-text">--</span>
+            </div>
+          </div>
+        </div>
         <div class="chat-messages" id="side-chat-messages"></div>
         <div class="chat-input-area" id="side-chat-input-area">
           <button class="voice-btn" id="side-voice-btn" title="Hold to record">🎤</button>

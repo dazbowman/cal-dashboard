@@ -538,6 +538,83 @@ app.get('/api/config', (req, res) => {
   }
 });
 
+// API: Get session status from session files and config
+app.get('/api/session-status', async (req, res) => {
+  try {
+    const status = {};
+    
+    // Read from session metadata file
+    const sessionsPath = path.join(OPENCLAW_BASE, 'agents/main/sessions/sessions.json');
+    const configPath = path.join(OPENCLAW_BASE, 'openclaw.json');
+    
+    // Get config for model and thinking defaults
+    let config = {};
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (e) {}
+    
+    // Get session data
+    let sessionData = {};
+    try {
+      const sessions = JSON.parse(fs.readFileSync(sessionsPath, 'utf8'));
+      sessionData = sessions['agent:main:main'] || {};
+    } catch (e) {}
+    
+    // Model (from session or config)
+    const model = sessionData.model || 
+                  config.agents?.defaults?.model?.primary || 
+                  config.agent?.model || 
+                  config.model || 
+                  'unknown';
+    status.model = model;
+    // Simplify model name (get last part after /)
+    const parts = model.split('/');
+    status.modelShort = parts[parts.length - 1] || model;
+    
+    // Context window size
+    const contextMax = sessionData.contextTokens || 200000;
+    status.contextMax = contextMax;
+    
+    // To estimate context usage, count the session file size or use a heuristic
+    // For now, we'll try to count messages in the session JSONL
+    let contextUsed = 0;
+    try {
+      const sessionId = sessionData.sessionId;
+      if (sessionId) {
+        const sessionFile = path.join(OPENCLAW_BASE, `agents/main/sessions/${sessionId}.jsonl`);
+        if (fs.existsSync(sessionFile)) {
+          const stat = fs.statSync(sessionFile);
+          // Rough estimate: ~4 chars per token on average
+          // But session files include tool calls which are verbose
+          // Use file size / 8 as a rough estimate (conservative)
+          contextUsed = Math.floor(stat.size / 8);
+        }
+      }
+    } catch (e) {}
+    
+    status.contextUsed = contextUsed;
+    status.contextPercent = contextMax > 0 ? Math.min(Math.floor((contextUsed / contextMax) * 100), 100) : 0;
+    
+    // Thinking level (from config)
+    status.thinking = config.agents?.defaults?.thinking?.default || 
+                      config.agents?.defaults?.thinkingDefault ||
+                      config.agent?.thinkingDefault || 
+                      config.agent?.thinking?.default || 
+                      'off';
+    
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ 
+      error: err.message,
+      modelShort: 'unknown',
+      contextUsed: 0,
+      contextMax: 200000,
+      contextPercent: 0,
+      thinking: 'off'
+    });
+  }
+});
+
 // Helper to generate unique IDs
 function generateId() {
   return crypto.randomUUID();

@@ -1428,9 +1428,73 @@ class CalDashboard {
     // Load cron jobs mini widget
     this.loadCronMini();
     
+    // Load session status
+    this.loadSessionStatus();
+    
     // Start periodic updates
     setInterval(() => this.loadPiStats(), 5000); // Every 5 seconds
     setInterval(() => this.loadCronMini(), 30000); // Every 30 seconds
+    setInterval(() => this.loadSessionStatus(), 10000); // Every 10 seconds
+  }
+  
+  // Session Status - Model, Thinking, Context
+  async loadSessionStatus() {
+    try {
+      const res = await fetch('/api/session-status');
+      if (!res.ok) throw new Error('Failed to fetch status');
+      const status = await res.json();
+      
+      // Update both main and side panels
+      this.updateSessionStatusUI('main', status);
+      this.updateSessionStatusUI('side', status);
+      
+    } catch (err) {
+      console.error('Failed to load session status:', err);
+    }
+  }
+  
+  updateSessionStatusUI(prefix, status) {
+    // Model
+    const modelEl = document.getElementById(`${prefix}-status-model`);
+    if (modelEl && status.modelShort) {
+      modelEl.textContent = status.modelShort;
+    }
+    
+    // Thinking level
+    const thinkEl = document.getElementById(`${prefix}-status-thinking`);
+    if (thinkEl) {
+      const level = status.thinking || 'off';
+      thinkEl.textContent = level;
+      thinkEl.setAttribute('data-level', level);
+    }
+    
+    // Context bar
+    const contextFill = document.getElementById(`${prefix}-context-fill`);
+    const contextText = document.getElementById(`${prefix}-context-text`);
+    
+    if (contextFill && contextText) {
+      const percent = status.contextPercent || 0;
+      const used = status.contextUsed || 0;
+      const max = status.contextMax || 200000;
+      
+      // Update bar width
+      contextFill.style.width = `${Math.min(percent, 100)}%`;
+      
+      // Update color class based on percentage
+      contextFill.classList.remove('low', 'medium', 'high');
+      if (percent >= 75) {
+        contextFill.classList.add('high');
+      } else if (percent >= 50) {
+        contextFill.classList.add('medium');
+      } else {
+        contextFill.classList.add('low');
+      }
+      
+      // Format context text
+      const usedK = (used / 1000).toFixed(0);
+      const maxK = (max / 1000).toFixed(0);
+      contextText.textContent = `${usedK}k / ${maxK}k`;
+    }
   }
   
   // Temperature Chart
