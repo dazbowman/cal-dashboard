@@ -369,7 +369,7 @@ class CalDashboard {
             }
           };
           
-          mediaRecorder.start();
+          mediaRecorder.start(100); // Collect chunks every 100ms
           recordingStartTime = Date.now();
           
           // Show recording indicator
