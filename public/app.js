@@ -601,7 +601,8 @@ class CalDashboard {
         startRecording();
       });
       
-      btn.addEventListener('mouseup', () => {
+      btn.addEventListener('mouseup', (e) => {
+        e.preventDefault();
         stopRecording();
       });
       
@@ -611,13 +612,20 @@ class CalDashboard {
         }
       });
       
+      // Prevent click event from firing after mouseup (prevents double-recording)
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      
       // Touch support
       btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         startRecording();
       });
       
-      btn.addEventListener('touchend', () => {
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
         stopRecording();
       });
       
