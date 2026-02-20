@@ -2604,6 +2604,62 @@ body {
   font-size: 10px;
 }
 
+/* Reset Button */
+.reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.reset-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.reset-btn:active {
+  transform: scale(0.95);
+}
+
+.reset-btn.resetting {
+  pointer-events: none;
+  color: var(--accent);
+}
+
+.reset-btn.resetting svg {
+  animation: spin-reset 0.8s linear infinite;
+}
+
+@keyframes spin-reset {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.reset-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reset-btn.compact {
+  width: 26px;
+  height: 26px;
+}
+
+.reset-btn.compact svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .session-status-bar {

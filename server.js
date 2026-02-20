@@ -615,6 +615,55 @@ app.get('/api/session-status', async (req, res) => {
   }
 });
 
+// API: Reset session - delete session file and update sessions.json
+app.post('/api/reset-session', async (req, res) => {
+  try {
+    const sessionsPath = path.join(OPENCLAW_BASE, 'agents/main/sessions/sessions.json');
+    const sessionKey = 'agent:main:main';
+    
+    // Read sessions.json
+    const sessions = JSON.parse(fs.readFileSync(sessionsPath, 'utf8'));
+    const sessionData = sessions[sessionKey];
+    
+    if (!sessionData || !sessionData.sessionId) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    const oldSessionId = sessionData.sessionId;
+    const oldSessionFile = path.join(OPENCLAW_BASE, `agents/main/sessions/${oldSessionId}.jsonl`);
+    
+    // Generate new session ID
+    const newSessionId = crypto.randomUUID();
+    
+    // Delete old session file (or rename it)
+    if (fs.existsSync(oldSessionFile)) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupFile = `${oldSessionFile}.reset.${timestamp}`;
+      fs.renameSync(oldSessionFile, backupFile);
+      console.log(`[Reset] Backed up session file: ${backupFile}`);
+    }
+    
+    // Update sessions.json with new session ID
+    sessions[sessionKey].sessionId = newSessionId;
+    sessions[sessionKey].updatedAt = Date.now();
+    sessions[sessionKey].systemSent = false; // Force system prompt to be re-sent
+    
+    fs.writeFileSync(sessionsPath, JSON.stringify(sessions, null, 2));
+    console.log(`[Reset] Updated session ID: ${oldSessionId} -> ${newSessionId}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Session reset',
+      oldSessionId,
+      newSessionId
+    });
+    
+  } catch (err) {
+    console.error('[Reset] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Helper to generate unique IDs
 function generateId() {
   return crypto.randomUUID();

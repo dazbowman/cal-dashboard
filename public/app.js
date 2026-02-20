@@ -22,6 +22,7 @@ class CalDashboard {
     this.setupMobileMenu();
     this.setupChatPanel();
     this.setupVoiceInput();
+    this.setupResetButtons();
     this.connectWebSocket();
     this.loadInitialData();
   }
@@ -1450,6 +1451,71 @@ class CalDashboard {
       
     } catch (err) {
       console.error('Failed to load session status:', err);
+    }
+  }
+  
+  // Setup reset buttons
+  setupResetButtons() {
+    ['main', 'side'].forEach(prefix => {
+      const btn = document.getElementById(`${prefix}-reset-btn`);
+      if (btn) {
+        btn.addEventListener('click', () => this.resetSession());
+      }
+    });
+  }
+  
+  // Reset session
+  async resetSession() {
+    const mainBtn = document.getElementById('main-reset-btn');
+    const sideBtn = document.getElementById('side-reset-btn');
+    
+    // Visual feedback - spinning
+    [mainBtn, sideBtn].forEach(btn => {
+      if (btn) btn.classList.add('resetting');
+    });
+    
+    try {
+      const res = await fetch('/api/reset-session', { method: 'POST' });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        // Clear chat messages
+        ['main-chat-messages', 'side-chat-messages'].forEach(id => {
+          const container = document.getElementById(id);
+          if (container) container.innerHTML = '';
+        });
+        
+        // Clear local messages array
+        this.messages = [];
+        
+        // Immediately set context to 0
+        ['main', 'side'].forEach(prefix => {
+          const fill = document.getElementById(`${prefix}-context-fill`);
+          const text = document.getElementById(`${prefix}-context-text`);
+          if (fill) {
+            fill.style.width = '0%';
+            fill.classList.remove('medium', 'high');
+            fill.classList.add('low');
+          }
+          if (text) text.textContent = '0k / 200k';
+        });
+        
+        // Refresh status after a short delay (let gateway process)
+        setTimeout(() => this.loadSessionStatus(), 1000);
+        
+        console.log('Session reset successful');
+      } else {
+        console.error('Reset failed:', data.error);
+        alert('Reset failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Reset error:', err);
+      alert('Reset failed: ' + err.message);
+    } finally {
+      // Stop spinning
+      [mainBtn, sideBtn].forEach(btn => {
+        if (btn) btn.classList.remove('resetting');
+      });
     }
   }
   
