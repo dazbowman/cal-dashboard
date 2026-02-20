@@ -793,6 +793,7 @@ wss.on('connection', (clientWs) => {
           const transcript = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
           
           if (transcript) {
+            console.log('Transcription successful:', transcript);
             // Send transcribed text to gateway
             const sendId = generateId();
             pendingRequests.set(sendId, 'chat.send');
@@ -809,16 +810,27 @@ wss.on('connection', (clientWs) => {
             }));
             
             // Tell client what was transcribed
-            clientWs.send(JSON.stringify({
-              type: 'transcription',
-              text: transcript
-            }));
+            console.log('Sending transcription event to client:', { type: 'transcription', text: transcript });
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(JSON.stringify({
+                type: 'transcription',
+                text: transcript
+              }));
+              console.log('Transcription event sent to client');
+            } else {
+              console.log('Client WebSocket not open, cannot send transcription event');
+            }
           } else {
-            clientWs.send(JSON.stringify({ type: 'error', message: 'Could not transcribe audio' }));
+            console.log('Transcription empty or failed');
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(JSON.stringify({ type: 'error', message: 'Could not transcribe audio' }));
+            }
           }
         } catch (err) {
           console.error('Transcription error:', err);
-          clientWs.send(JSON.stringify({ type: 'error', message: 'Transcription failed: ' + err.message }));
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(JSON.stringify({ type: 'error', message: 'Transcription failed: ' + err.message }));
+          }
         }
       } else if (gatewayWs.readyState === WebSocket.OPEN) {
         gatewayWs.send(data.toString());

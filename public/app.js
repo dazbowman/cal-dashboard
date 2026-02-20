@@ -129,6 +129,7 @@ class CalDashboard {
     
     if (data.type === 'transcription') {
       // Update the "sending..." message with actual transcript
+      console.log('Received transcription event:', data);
       this.updateLastUserMessage(data.text);
       return;
     }
@@ -172,11 +173,44 @@ class CalDashboard {
   }
   
   updateLastUserMessage(text) {
+    console.log('updateLastUserMessage called with text:', text);
     ['main-chat-messages', 'side-chat-messages'].forEach(id => {
       const container = document.getElementById(id);
-      const lastUserMsg = container.querySelector('.chat-message.user:last-of-type .message-content');
-      if (lastUserMsg && lastUserMsg.textContent.includes('sending')) {
-        lastUserMsg.textContent = text;
+      if (!container) {
+        console.log(`Container ${id} not found`);
+        return;
+      }
+      console.log(`Searching for last user message in container: ${id}`);
+      console.log(`Container has ${container.children.length} child elements`);
+      
+      // Get all user messages and pick the last one
+      const userMessageElements = container.querySelectorAll('.chat-message.user');
+      console.log(`Found ${userMessageElements.length} user messages`);
+      
+      if (userMessageElements.length === 0) {
+        console.log('No user messages found');
+        return;
+      }
+      
+      const lastUserMessageEl = userMessageElements[userMessageElements.length - 1];
+      const lastUserMsg = lastUserMessageEl.querySelector('.message-content');
+      
+      console.log('Found last user message element:', lastUserMessageEl);
+      console.log('Found message content:', lastUserMsg);
+      
+      if (lastUserMsg) {
+        console.log('Current text content:', lastUserMsg.textContent);
+        console.log('Includes "sending"?', lastUserMsg.textContent.includes('sending'));
+        
+        if (lastUserMsg.textContent.includes('sending')) {
+          console.log('Updating message from:', lastUserMsg.textContent, 'to:', text);
+          lastUserMsg.textContent = text;
+          console.log('Message updated successfully');
+        } else {
+          console.log('Did not update - message does not contain "sending"');
+        }
+      } else {
+        console.log('Did not find lastUserMsg element');
       }
     });
   }
@@ -295,17 +329,23 @@ class CalDashboard {
   }
   
   addChatMessage(text, role, isHistory = false) {
+    console.log(`addChatMessage called: text="${text}", role="${role}", isHistory=${isHistory}`);
     const message = { text, role, time: new Date() };
     this.messages.push(message);
     
     // Add to both chat containers
     ['main-chat-messages', 'side-chat-messages'].forEach(id => {
       const container = document.getElementById(id);
+      if (!container) {
+        console.warn(`Container ${id} not found`);
+        return;
+      }
       const msgEl = document.createElement('div');
       msgEl.className = `chat-message ${role}`;
       if (isHistory) msgEl.classList.add('history');
       msgEl.innerHTML = `<div class="message-content">${this.escapeHtml(text)}</div>`;
       container.appendChild(msgEl);
+      console.log(`Added message to ${id}, container now has ${container.children.length} messages`);
       container.scrollTop = container.scrollHeight;
     });
   }
