@@ -380,6 +380,7 @@ class CalDashboard {
       let audioBlob = null;
       let analyser = null;
       let animationFrame = null;
+      let selectedMimeType = 'audio/webm'; // Default fallback
       
       const startRecording = async () => {
         try {
@@ -393,7 +394,28 @@ class CalDashboard {
           analyser.fftSize = 64;
           source.connect(analyser);
           
-          mediaRecorder = new MediaRecorder(stream);
+          // Determine best MIME type supported by browser that Gemini accepts
+          // Gemini API supports: audio/mp3, audio/wav, audio/ogg, audio/flac
+          // Try in order of preference: ogg (most common), wav, mp4, fallback to webm
+          let mimeType = 'audio/webm'; // Ultimate fallback
+          const supportedFormats = [
+            'audio/ogg',
+            'audio/wav',
+            'audio/mp4',
+            'audio/webm;codecs=opus',
+            'audio/webm'
+          ];
+          
+          for (const format of supportedFormats) {
+            if (MediaRecorder.isTypeSupported(format)) {
+              mimeType = format;
+              console.log(`[VOICE] Using MIME type: ${mimeType}`);
+              break;
+            }
+          }
+          
+          selectedMimeType = mimeType;
+          mediaRecorder = new MediaRecorder(stream, { mimeType });
           audioChunks = [];
           
           mediaRecorder.ondataavailable = (e) => {
@@ -414,8 +436,9 @@ class CalDashboard {
             // Wait a brief moment to ensure all chunks are properly buffered
             setTimeout(() => {
               if (audioChunks.length > 0) {
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioBlob = new Blob(audioChunks, { type: selectedMimeType });
                 console.log('Blob created - total size:', audioBlob.size, 'bytes');
+                console.log('Blob MIME type:', selectedMimeType);
                 console.log('==============================');
                 showPreview();
               } else {
@@ -552,16 +575,17 @@ class CalDashboard {
           
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             console.log('Sending voice message via WebSocket...');
+            console.log('Using MIME type for transmission:', selectedMimeType);
             const voicePayload = {
               type: 'voice',
               channel: 'webchat',
               audio: base64,
-              mimeType: 'audio/webm',
+              mimeType: selectedMimeType,
               timestamp: Date.now()  // Add timestamp to prevent caching
             };
             console.log('Voice payload size:', JSON.stringify(voicePayload).length);
             this.ws.send(JSON.stringify(voicePayload));
-            console.log('Voice message sent');
+            console.log('Voice message sent with MIME type:', selectedMimeType);
           } else {
             console.warn('WebSocket not open for voice send');
           }
