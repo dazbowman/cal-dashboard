@@ -615,54 +615,8 @@ app.get('/api/session-status', async (req, res) => {
   }
 });
 
-// API: Reset session - delete session file and update sessions.json
-app.post('/api/reset-session', async (req, res) => {
-  try {
-    const sessionsPath = path.join(OPENCLAW_BASE, 'agents/main/sessions/sessions.json');
-    const sessionKey = 'agent:main:main';
-    
-    // Read sessions.json
-    const sessions = JSON.parse(fs.readFileSync(sessionsPath, 'utf8'));
-    const sessionData = sessions[sessionKey];
-    
-    if (!sessionData || !sessionData.sessionId) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    const oldSessionId = sessionData.sessionId;
-    const oldSessionFile = path.join(OPENCLAW_BASE, `agents/main/sessions/${oldSessionId}.jsonl`);
-    
-    // Generate new session ID
-    const newSessionId = crypto.randomUUID();
-    
-    // Delete old session file (or rename it)
-    if (fs.existsSync(oldSessionFile)) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupFile = `${oldSessionFile}.reset.${timestamp}`;
-      fs.renameSync(oldSessionFile, backupFile);
-      console.log(`[Reset] Backed up session file: ${backupFile}`);
-    }
-    
-    // Update sessions.json with new session ID
-    sessions[sessionKey].sessionId = newSessionId;
-    sessions[sessionKey].updatedAt = Date.now();
-    sessions[sessionKey].systemSent = false; // Force system prompt to be re-sent
-    
-    fs.writeFileSync(sessionsPath, JSON.stringify(sessions, null, 2));
-    console.log(`[Reset] Updated session ID: ${oldSessionId} -> ${newSessionId}`);
-    
-    res.json({ 
-      success: true, 
-      message: 'Session reset',
-      oldSessionId,
-      newSessionId
-    });
-    
-  } catch (err) {
-    console.error('[Reset] Error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
+// Session reset is handled via WebSocket sessions.delete method
+// The client sends a special 'reset' message type which triggers this
 
 // Helper to generate unique IDs
 function generateId() {
@@ -875,12 +829,28 @@ wss.on('connection', (clientWs) => {
   clientWs.on('message', async (data) => {
     try {
       const msg = JSON.parse(data.toString());
+      console.log('[Client->Server] Message received:', msg.type, msg.content?.slice(0, 50));
       
-      if (msg.type === 'message' && gatewayWs.readyState === WebSocket.OPEN) {
+      if (msg.type === 'reset' && gatewayWs.readyState === WebSocket.OPEN) {
+        // Reset session using sessions.delete - this properly clears gateway memory
+        const resetId = generateId();
+        pendingRequests.set(resetId, 'sessions.delete');
+        
+        console.log('[Server->Gateway] Deleting session for reset:', sessionKey);
+        gatewayWs.send(JSON.stringify({
+          type: 'req',
+          id: resetId,
+          method: 'sessions.delete',
+          params: {
+            sessionKey
+          }
+        }));
+      } else if (msg.type === 'message' && gatewayWs.readyState === WebSocket.OPEN) {
         // Send chat message using proper protocol
         const sendId = generateId();
         pendingRequests.set(sendId, 'chat.send');
         
+        console.log('[Server->Gateway] Sending message:', msg.content?.slice(0, 50));
         gatewayWs.send(JSON.stringify({
           type: 'req',
           id: sendId,

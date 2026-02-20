@@ -160,68 +160,45 @@
       <div class="page active" id="page-dashboard">
         <div class="page-header">
           <h1>Dashboard</h1>
-          <span class="page-subtitle">Overview of Cal's activities</span>
         </div>
         
-        <div class="dashboard-grid">
-          <!-- Pi System Stats - 4 cards in a row -->
-          <div class="stats-row">
-            <div class="card stat-card gauge-card">
-              <span class="stat-label">CPU Usage</span>
-              <div class="gauge-container">
-                <svg class="gauge" viewBox="0 0 120 70">
-                  <defs>
-                    <linearGradient id="gauge-gradient-cpu" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" style="stop-color:#10b981"/>
-                      <stop offset="50%" style="stop-color:#f59e0b"/>
-                      <stop offset="100%" style="stop-color:#ef4444"/>
-                    </linearGradient>
-                  </defs>
-                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="12" stroke-linecap="round"/>
-                  <path class="gauge-fill" id="cpu-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-cpu)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 157"/>
-                  <text class="gauge-value" id="pi-cpu" x="60" y="58" text-anchor="middle">--%</text>
-                </svg>
-              </div>
+        <!-- Compact Pi Stats Bar -->
+        <div class="pi-stats-bar">
+          <div class="pi-stat-item">
+            <span class="pi-stat-icon">⚡</span>
+            <span class="pi-stat-label">CPU</span>
+            <div class="pi-stat-bar-wrap">
+              <div class="pi-stat-bar-fill cpu-bar" id="cpu-bar" style="width: 0%"></div>
             </div>
-            <div class="card stat-card gauge-card">
-              <span class="stat-label">Memory</span>
-              <span class="stat-detail" id="pi-memory-detail">-- / --</span>
-              <div class="gauge-container">
-                <svg class="gauge" viewBox="0 0 120 70">
-                  <defs>
-                    <linearGradient id="gauge-gradient-mem" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" style="stop-color:#10b981"/>
-                      <stop offset="50%" style="stop-color:#f59e0b"/>
-                      <stop offset="100%" style="stop-color:#ef4444"/>
-                    </linearGradient>
-                  </defs>
-                  <path class="gauge-bg" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke-width="12" stroke-linecap="round"/>
-                  <path class="gauge-fill" id="memory-gauge" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#gauge-gradient-mem)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 157"/>
-                  <text class="gauge-value" id="pi-memory" x="60" y="58" text-anchor="middle">--%</text>
-                </svg>
-              </div>
-            </div>
-            <div class="card stat-card">
-              <div class="stat-header">
-                <span class="stat-icon">💿</span>
-                <span class="stat-value" id="pi-disk">--</span>
-              </div>
-              <span class="stat-label">Disk</span>
-              <div class="stat-bar">
-                <div class="stat-bar-fill disk-fill" id="pi-disk-bar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="card stat-card temp-card">
-              <div class="stat-header">
-                <span class="stat-icon">🌡️</span>
-                <span class="stat-value" id="pi-temp">--</span>
-              </div>
-              <span class="stat-label">Temperature</span>
-              <div class="temp-mini-chart">
-                <canvas id="temp-chart"></canvas>
-              </div>
-            </div>
+            <span class="pi-stat-value" id="pi-cpu">--%</span>
           </div>
+          <div class="pi-stat-item">
+            <span class="pi-stat-icon">🧠</span>
+            <span class="pi-stat-label">MEM</span>
+            <div class="pi-stat-bar-wrap">
+              <div class="pi-stat-bar-fill mem-bar" id="memory-bar" style="width: 0%"></div>
+            </div>
+            <span class="pi-stat-value" id="pi-memory">--</span>
+          </div>
+          <div class="pi-stat-item">
+            <span class="pi-stat-icon">💿</span>
+            <span class="pi-stat-label">DISK</span>
+            <div class="pi-stat-bar-wrap">
+              <div class="pi-stat-bar-fill disk-bar" id="pi-disk-bar" style="width: 0%"></div>
+            </div>
+            <span class="pi-stat-value" id="pi-disk">--</span>
+          </div>
+          <div class="pi-stat-item pi-stat-temp">
+            <span class="pi-stat-icon">🌡️</span>
+            <span class="pi-stat-label">TEMP</span>
+            <div class="pi-temp-chart-wrap">
+              <canvas id="temp-chart"></canvas>
+            </div>
+            <span class="pi-stat-value" id="pi-temp">--</span>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
 
           <!-- Main content row - 50/50 split -->
           <div class="main-row">

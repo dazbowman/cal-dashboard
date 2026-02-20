@@ -1315,157 +1315,139 @@ body {
   display: block;
 }
 
-/* ===== Stats Row ===== */
-.stats-row {
-  display: grid;
-  grid-template-columns: 0.85fr 0.85fr 0.85fr 1.45fr;
-  gap: 16px;
-  grid-column: 1 / -1;
-}
-
-.stat-card {
+/* ===== Compact Pi Stats Bar ===== */
+.pi-stats-bar {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 14px;
-  min-height: 65px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  min-height: 48px;
 }
 
-.stat-header {
+.pi-stat-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding-right: 16px;
+  border-right: 1px solid var(--border-color);
 }
 
-.stat-icon {
-  font-size: 24px;
+.pi-stat-item:last-child {
+  border-right: none;
+  padding-right: 0;
 }
 
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
+.pi-stat-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-.stat-label {
-  font-size: 11px;
+.pi-stat-label {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
 }
 
-.stat-bar {
-  height: 12px;
+.pi-stat-bar-wrap {
+  flex: 1 1 0;
+  height: 10px;
   background: var(--bg-primary);
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
-  margin-top: 8px;
+  min-width: 20px;
 }
 
-.stat-bar-fill {
-  border-radius: 6px;
+.pi-stat-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease, background-color 0.3s ease;
 }
 
-/* Gauge Cards */
-.gauge-card {
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
+.pi-stat-bar-fill.cpu-bar {
+  background: linear-gradient(90deg, #10b981, #f59e0b);
 }
 
-.gauge-card .stat-label {
-  margin-bottom: 0;
+.pi-stat-bar-fill.mem-bar {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
 }
 
-.stat-detail {
-  font-size: 18px;
+.pi-stat-bar-fill.disk-bar {
+  background: linear-gradient(90deg, #06b6d4, #10b981);
+}
+
+.pi-stat-value {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.gauge-container {
-  width: 100%;
-  max-width: 140px;
+/* Temperature stat with mini chart - fixed 30% width */
+.pi-stat-temp {
+  flex: 0 0 30%;
+  min-width: 0;
 }
 
-.gauge {
-  width: 100%;
-  height: auto;
+.pi-temp-chart-wrap {
+  flex: 1 1 0;
+  height: 36px;
+  min-width: 20px;
 }
 
-.gauge-bg {
-  stroke: var(--bg-primary);
-}
-
-.gauge-fill {
-  transition: stroke-dasharray 0.5s ease;
-}
-
-.gauge-value {
-  font-size: 16px;
-  font-weight: 700;
-  fill: var(--text-primary);
-  font-family: inherit;
-}
-
-/* Temperature card with mini chart */
-.temp-card {
-  padding: 10px 14px;
-}
-
-.temp-mini-chart {
-  flex: 1;
-  min-height: 40px;
-  margin-top: 2px;
-}
-
-.temp-mini-chart canvas {
+.pi-temp-chart-wrap canvas {
   width: 100% !important;
   height: 100% !important;
 }
 
-.stat-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.5s ease, background-color 0.3s ease;
+/* Responsive: stack on smaller widths */
+@media (max-width: 600px) {
+  .pi-stats-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .pi-stat-item {
+    max-width: none;
+  }
+  
+  .pi-stat-temp {
+    max-width: none;
+  }
 }
 
-.stat-bar-fill.cpu-fill {
-  background: linear-gradient(90deg, #10b981, #f59e0b);
+/* When very narrow (chat panel expanded), go to 2-column */
+@media (max-width: 480px) {
+  .pi-stats-bar {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+  
+  .pi-stat-item {
+    flex: 1 1 45%;
+    min-width: 100px;
+  }
 }
 
-.stat-bar-fill.memory-fill {
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-}
-
-.stat-bar-fill.disk-fill {
-  background: linear-gradient(90deg, #06b6d4, #10b981);
-}
-
-.stat-bar-fill.temp-fill {
-  background: linear-gradient(90deg, #10b981, #ef4444);
-}
-
-/* High usage warning colors */
-.stat-bar-fill.warning {
+/* Warning/danger states for stat bars */
+.pi-stat-bar-fill.warning {
   background: var(--warning) !important;
 }
 
-.stat-bar-fill.danger {
+.pi-stat-bar-fill.danger {
   background: var(--error) !important;
-}
-
-@media (max-width: 1024px) {
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .stats-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ===== Activity Feed Enhancements ===== */

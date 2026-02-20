@@ -181,12 +181,10 @@ class CalDashboard {
         console.log(`Container ${id} not found`);
         return;
       }
-      console.log(`Searching for last user message in container: ${id}`);
-      console.log(`Container has ${container.children.length} child elements`);
       
       // Get all user messages and pick the last one
       const userMessageElements = container.querySelectorAll('.chat-message.user');
-      console.log(`Found ${userMessageElements.length} user messages`);
+      console.log(`Found ${userMessageElements.length} user messages in ${id}`);
       
       if (userMessageElements.length === 0) {
         console.log('No user messages found');
@@ -196,22 +194,13 @@ class CalDashboard {
       const lastUserMessageEl = userMessageElements[userMessageElements.length - 1];
       const lastUserMsg = lastUserMessageEl.querySelector('.message-content');
       
-      console.log('Found last user message element:', lastUserMessageEl);
-      console.log('Found message content:', lastUserMsg);
-      
       if (lastUserMsg) {
-        console.log('Current text content:', lastUserMsg.textContent);
-        console.log('Includes "sending"?', lastUserMsg.textContent.includes('sending'));
-        
-        if (lastUserMsg.textContent.includes('sending')) {
-          console.log('Updating message from:', lastUserMsg.textContent, 'to:', text);
+        const currentText = lastUserMsg.textContent;
+        // Check for placeholder text (transcribing or sending)
+        if (currentText.includes('Transcribing') || currentText.includes('sending')) {
+          console.log('Updating placeholder message to:', text);
           lastUserMsg.textContent = text;
-          console.log('Message updated successfully');
-        } else {
-          console.log('Did not update - message does not contain "sending"');
         }
-      } else {
-        console.log('Did not find lastUserMsg element');
       }
     });
   }
@@ -357,7 +346,7 @@ class CalDashboard {
     return div.innerHTML;
   }
   
-  // Voice Input - Hold to Record with Visual Feedback
+  // Voice Input - Click to Start/Stop Recording with Visual Feedback
   setupVoiceInput() {
     this.voiceRecorders = {};
     
@@ -381,23 +370,25 @@ class CalDashboard {
       let audioBlob = null;
       let analyser = null;
       let animationFrame = null;
+      let audioStream = null;
       let selectedMimeType = 'audio/webm'; // Default fallback
+      let isRecording = false;
       
       const startRecording = async () => {
+        if (isRecording) return; // Already recording
+        
         try {
           console.log('[VOICE] Recording started - waiting for audio...');
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
           
           // Set up audio analyser for waveform
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const source = audioContext.createMediaStreamSource(stream);
+          const source = audioContext.createMediaStreamSource(audioStream);
           analyser = audioContext.createAnalyser();
           analyser.fftSize = 64;
           source.connect(analyser);
           
           // Determine best MIME type supported by browser that Gemini accepts
-          // Gemini API supports: audio/mp3, audio/wav, audio/ogg, audio/flac
-          // Try in order of preference: ogg (most common), wav, mp4, fallback to webm
           let mimeType = 'audio/webm'; // Ultimate fallback
           const supportedFormats = [
             'audio/ogg',
@@ -416,7 +407,7 @@ class CalDashboard {
           }
           
           selectedMimeType = mimeType;
-          mediaRecorder = new MediaRecorder(stream, { mimeType });
+          mediaRecorder = new MediaRecorder(audioStream, { mimeType });
           audioChunks = [];
           
           mediaRecorder.ondataavailable = (e) => {
@@ -427,11 +418,8 @@ class CalDashboard {
           mediaRecorder.onstop = () => {
             console.log('=== MEDIA RECORDER ONSTOP ===');
             console.log('Audio chunks collected:', audioChunks.length);
-            audioChunks.forEach((chunk, i) => {
-              console.log(`  Chunk ${i}: ${chunk.size} bytes, type: ${chunk.type}`);
-            });
             
-            stream.getTracks().forEach(track => track.stop());
+            audioStream.getTracks().forEach(track => track.stop());
             if (animationFrame) cancelAnimationFrame(animationFrame);
             
             // Wait a brief moment to ensure all chunks are properly buffered
@@ -439,17 +427,18 @@ class CalDashboard {
               if (audioChunks.length > 0) {
                 audioBlob = new Blob(audioChunks, { type: selectedMimeType });
                 console.log('Blob created - total size:', audioBlob.size, 'bytes');
-                console.log('Blob MIME type:', selectedMimeType);
                 console.log('==============================');
                 showPreview();
               } else {
                 console.warn('No audio chunks collected!');
+                resetState();
               }
-            }, 50);  // 50ms wait to ensure chunks are finalized
+            }, 50);
           };
           
-          mediaRecorder.start(500); // Collect chunks every 500ms (increased from 100ms)
+          mediaRecorder.start(500); // Collect chunks every 500ms
           recordingStartTime = Date.now();
+          isRecording = true;
           
           // Show recording indicator
           btn.classList.add('recording');
@@ -475,7 +464,7 @@ class CalDashboard {
               const value = dataArray[i * 2] || 0;
               const height = Math.max(4, (value / 255) * 24);
               bar.style.height = height + 'px';
-              bar.style.animation = 'none'; // Disable CSS animation, use live data
+              bar.style.animation = 'none';
             });
             
             animationFrame = requestAnimationFrame(animateWaveform);
@@ -485,14 +474,18 @@ class CalDashboard {
         } catch (err) {
           console.error('Failed to start recording:', err);
           alert('Could not access microphone. Please allow microphone access.');
+          isRecording = false;
         }
       };
       
       const stopRecording = () => {
+        if (!isRecording) return;
+        
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
         }
         
+        isRecording = false;
         btn.classList.remove('recording');
         indicator.classList.remove('active');
         clearInterval(recordingTimer);
@@ -505,11 +498,20 @@ class CalDashboard {
         });
       };
       
+      const toggleRecording = () => {
+        if (isRecording) {
+          stopRecording();
+        } else {
+          startRecording();
+        }
+      };
+      
       const cancelRecording = () => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           audioChunks = []; // Clear chunks so no preview is shown
           mediaRecorder.stop();
         }
+        isRecording = false;
         resetState();
       };
       
@@ -546,6 +548,7 @@ class CalDashboard {
         clearInterval(recordingTimer);
         timeDisplay.textContent = '0:00';
         audioBlob = null;
+        isRecording = false;
       };
       
       const sendVoice = async () => {
@@ -556,35 +559,29 @@ class CalDashboard {
         const recordingDurationSec = Math.floor(recordingDurationMs / 1000);
         console.log('=== VOICE SEND DEBUG ===');
         console.log('Audio blob size (bytes):', audioBlob.size);
-        console.log('Recording duration (ms):', recordingDurationMs);
         console.log('Recording duration (sec):', recordingDurationSec);
         console.log('Audio blob type:', audioBlob.type);
-        console.log('Audio chunks collected:', audioChunks.length);
         
-        // Show that we're sending
-        this.addChatMessage('[Voice message sending...]', 'user');
+        // Show placeholder while transcribing
+        this.addChatMessage('[Transcribing...]', 'user');
         
         // Convert blob to base64 and send
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result.split(',')[1];
           
-          // LOGGING: Log base64 size
           console.log('Base64 length (chars):', base64.length);
-          console.log('Base64 first 100 chars:', base64.substring(0, 100));
           console.log('======================');
           
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             console.log('Sending voice message via WebSocket...');
-            console.log('Using MIME type for transmission:', selectedMimeType);
             const voicePayload = {
               type: 'voice',
               channel: 'webchat',
               audio: base64,
               mimeType: selectedMimeType,
-              timestamp: Date.now()  // Add timestamp to prevent caching
+              timestamp: Date.now()
             };
-            console.log('Voice payload size:', JSON.stringify(voicePayload).length);
             this.ws.send(JSON.stringify(voicePayload));
             console.log('Voice message sent with MIME type:', selectedMimeType);
           } else {
@@ -596,45 +593,31 @@ class CalDashboard {
         resetState();
       };
       
-      // Event listeners - Hold to record
-      btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        startRecording();
-      });
-      
-      btn.addEventListener('mouseup', (e) => {
-        e.preventDefault();
-        stopRecording();
-      });
-      
-      btn.addEventListener('mouseleave', () => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          stopRecording();
-        }
-      });
-      
-      // Prevent click event from firing after mouseup (prevents double-recording)
+      // Event listeners - Click to toggle recording
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        toggleRecording();
       });
       
-      // Touch support
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        startRecording();
-      });
-      
+      // Touch support - also click to toggle
       btn.addEventListener('touchend', (e) => {
         e.preventDefault();
-        stopRecording();
+        e.stopPropagation();
+        toggleRecording();
       });
       
       // Cancel button
-      cancelBtn.addEventListener('click', cancelRecording);
+      cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelRecording();
+      });
       
       // Clear preview button
-      clearBtn.addEventListener('click', clearPreview);
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearPreview();
+      });
       
       // Modify send button to handle voice
       const originalSendHandler = () => {
@@ -1464,8 +1447,10 @@ class CalDashboard {
     });
   }
   
-  // Reset session
-  async resetSession() {
+  // Reset session - uses sessions.delete to properly clear gateway context
+  resetSession() {
+    console.log('=== RESET SESSION CALLED ===');
+    console.log('WebSocket state:', this.ws?.readyState, 'OPEN=', WebSocket.OPEN);
     const mainBtn = document.getElementById('main-reset-btn');
     const sideBtn = document.getElementById('side-reset-btn');
     
@@ -1474,49 +1459,48 @@ class CalDashboard {
       if (btn) btn.classList.add('resetting');
     });
     
-    try {
-      const res = await fetch('/api/reset-session', { method: 'POST' });
-      const data = await res.json();
+    // Send reset request - server will call sessions.delete on the gateway
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'reset'
+      }));
       
-      if (res.ok && data.success) {
-        // Clear chat messages
-        ['main-chat-messages', 'side-chat-messages'].forEach(id => {
-          const container = document.getElementById(id);
-          if (container) container.innerHTML = '';
-        });
-        
-        // Clear local messages array
-        this.messages = [];
-        
-        // Immediately set context to 0
-        ['main', 'side'].forEach(prefix => {
-          const fill = document.getElementById(`${prefix}-context-fill`);
-          const text = document.getElementById(`${prefix}-context-text`);
-          if (fill) {
-            fill.style.width = '0%';
-            fill.classList.remove('medium', 'high');
-            fill.classList.add('low');
-          }
-          if (text) text.textContent = '0k / 200k';
-        });
-        
-        // Refresh status after a short delay (let gateway process)
-        setTimeout(() => this.loadSessionStatus(), 1000);
-        
-        console.log('Session reset successful');
-      } else {
-        console.error('Reset failed:', data.error);
-        alert('Reset failed: ' + (data.error || 'Unknown error'));
-      }
-    } catch (err) {
-      console.error('Reset error:', err);
-      alert('Reset failed: ' + err.message);
-    } finally {
-      // Stop spinning
+      // Clear chat messages immediately for snappy UI
+      ['main-chat-messages', 'side-chat-messages'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container) container.innerHTML = '';
+      });
+      
+      // Clear local messages array
+      this.messages = [];
+      
+      // Immediately set context to 0 (gateway will confirm on next status poll)
+      ['main', 'side'].forEach(prefix => {
+        const fill = document.getElementById(`${prefix}-context-fill`);
+        const text = document.getElementById(`${prefix}-context-text`);
+        if (fill) {
+          fill.style.width = '0%';
+          fill.classList.remove('medium', 'high');
+          fill.classList.add('low');
+        }
+        if (text) text.textContent = '0k / 200k';
+      });
+      
+      // Refresh status after gateway processes reset
+      setTimeout(() => this.loadSessionStatus(), 1500);
+      
+      console.log('Session reset sent via sessions.delete');
+    } else {
+      console.error('WebSocket not connected');
+      alert('Cannot reset: WebSocket not connected');
+    }
+    
+    // Stop spinning after a brief delay
+    setTimeout(() => {
       [mainBtn, sideBtn].forEach(btn => {
         if (btn) btn.classList.remove('resetting');
       });
-    }
+    }, 1000);
   }
   
   updateSessionStatusUI(prefix, status) {
@@ -1705,16 +1689,17 @@ class CalDashboard {
       const data = await res.json();
       console.log('Pi stats loaded:', data);
       
-      // CPU Gauge
+      // CPU Bar
       const cpuEl = document.getElementById('pi-cpu');
-      const cpuGauge = document.getElementById('cpu-gauge');
-      if (cpuEl && cpuGauge) {
+      const cpuBar = document.getElementById('cpu-bar');
+      if (cpuEl) {
         const cpuPercent = Math.min(data.cpu.usage, 100);
         cpuEl.textContent = cpuPercent.toFixed(0) + '%';
-        // Arc length is ~157 (half circle with radius 50)
-        const arcLength = 157;
-        const filled = (cpuPercent / 100) * arcLength;
-        cpuGauge.setAttribute('stroke-dasharray', `${filled} ${arcLength}`);
+        if (cpuBar) {
+          cpuBar.style.width = cpuPercent + '%';
+          cpuBar.classList.toggle('warning', cpuPercent > 70);
+          cpuBar.classList.toggle('danger', cpuPercent > 90);
+        }
       }
       
       // Temperature - convert to Fahrenheit
@@ -1739,22 +1724,18 @@ class CalDashboard {
         }
       }
       
-      // Memory Gauge
+      // Memory Bar
       const memEl = document.getElementById('pi-memory');
-      const memGauge = document.getElementById('memory-gauge');
-      const memDetail = document.getElementById('pi-memory-detail');
-      if (memEl && memGauge) {
+      const memBar = document.getElementById('memory-bar');
+      if (memEl) {
         const memPercent = Math.min(data.memory.percent, 100);
-        memEl.textContent = memPercent.toFixed(0) + '%';
-        const arcLength = 157;
-        const filled = (memPercent / 100) * arcLength;
-        memGauge.setAttribute('stroke-dasharray', `${filled} ${arcLength}`);
-        
-        // Update detail text (convert MB to GB)
-        if (memDetail) {
-          const usedGB = (data.memory.used / 1024).toFixed(1);
-          const totalGB = (data.memory.total / 1024).toFixed(0);
-          memDetail.textContent = `${usedGB}GB / ${totalGB}GB`;
+        const usedGB = (data.memory.used / 1024).toFixed(1);
+        const totalGB = (data.memory.total / 1024).toFixed(0);
+        memEl.textContent = `${usedGB}/${totalGB}GB`;
+        if (memBar) {
+          memBar.style.width = memPercent + '%';
+          memBar.classList.toggle('warning', memPercent > 70);
+          memBar.classList.toggle('danger', memPercent > 90);
         }
       }
       
