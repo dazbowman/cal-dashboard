@@ -767,12 +767,23 @@ wss.on('connection', (clientWs) => {
         }));
       } else if (msg.type === 'voice') {
         // Voice message - transcribe first, then send as text
+        console.log('=== VOICE MESSAGE RECEIVED ===');
+        console.log('Audio data length:', msg.audio?.length || 0);
+        console.log('MIME type:', msg.mimeType);
+        console.log('First 100 chars of audio:', msg.audio?.substring(0, 100));
+        
         if (!GEMINI_KEY) {
+          console.error('GEMINI_KEY not configured');
           clientWs.send(JSON.stringify({ type: 'error', message: 'Voice transcription not configured' }));
           return;
         }
         
         try {
+          const mimeType = msg.mimeType || 'audio/webm';
+          const audioData = msg.audio;
+          
+          console.log(`Sending to Gemini API with mime_type: ${mimeType}, data length: ${audioData.length}`);
+          
           const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
             {
@@ -782,7 +793,7 @@ wss.on('connection', (clientWs) => {
                 contents: [{
                   parts: [
                     { text: 'Transcribe this audio exactly. Return only the transcription, nothing else.' },
-                    { inline_data: { mime_type: msg.mimeType || 'audio/webm', data: msg.audio } }
+                    { inline_data: { mime_type: mimeType, data: audioData } }
                   ]
                 }]
               })
@@ -790,7 +801,15 @@ wss.on('connection', (clientWs) => {
           );
           
           const result = await response.json();
+          
+          // LOGGING: Log full Gemini response
+          console.log('Gemini API response status:', response.status);
+          console.log('Full Gemini response:', JSON.stringify(result, null, 2));
+          
           const transcript = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+          
+          console.log('Extracted transcript:', transcript);
+          console.log('Transcript length:', transcript.length);
           
           if (transcript) {
             console.log('Transcription successful:', transcript);
@@ -821,7 +840,7 @@ wss.on('connection', (clientWs) => {
               console.log('Client WebSocket not open, cannot send transcription event');
             }
           } else {
-            console.log('Transcription empty or failed');
+            console.warn('Transcription empty or failed - result object:', JSON.stringify(result, null, 2));
             if (clientWs.readyState === WebSocket.OPEN) {
               clientWs.send(JSON.stringify({ type: 'error', message: 'Could not transcribe audio' }));
             }
@@ -832,6 +851,7 @@ wss.on('connection', (clientWs) => {
             clientWs.send(JSON.stringify({ type: 'error', message: 'Transcription failed: ' + err.message }));
           }
         }
+        console.log('=============================');
       } else if (gatewayWs.readyState === WebSocket.OPEN) {
         gatewayWs.send(data.toString());
       }

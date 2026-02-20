@@ -383,6 +383,7 @@ class CalDashboard {
       
       const startRecording = async () => {
         try {
+          console.log('[VOICE] Recording started - waiting for audio...');
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           
           // Set up audio analyser for waveform
@@ -396,20 +397,34 @@ class CalDashboard {
           audioChunks = [];
           
           mediaRecorder.ondataavailable = (e) => {
+            console.log(`Audio chunk received: ${e.data.size} bytes, type: ${e.data.type}`);
             audioChunks.push(e.data);
           };
           
           mediaRecorder.onstop = () => {
+            console.log('=== MEDIA RECORDER ONSTOP ===');
+            console.log('Audio chunks collected:', audioChunks.length);
+            audioChunks.forEach((chunk, i) => {
+              console.log(`  Chunk ${i}: ${chunk.size} bytes, type: ${chunk.type}`);
+            });
+            
             stream.getTracks().forEach(track => track.stop());
             if (animationFrame) cancelAnimationFrame(animationFrame);
             
-            if (audioChunks.length > 0) {
-              audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-              showPreview();
-            }
+            // Wait a brief moment to ensure all chunks are properly buffered
+            setTimeout(() => {
+              if (audioChunks.length > 0) {
+                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                console.log('Blob created - total size:', audioBlob.size, 'bytes');
+                console.log('==============================');
+                showPreview();
+              } else {
+                console.warn('No audio chunks collected!');
+              }
+            }, 50);  // 50ms wait to ensure chunks are finalized
           };
           
-          mediaRecorder.start(100); // Collect chunks every 100ms
+          mediaRecorder.start(500); // Collect chunks every 500ms (increased from 100ms)
           recordingStartTime = Date.now();
           
           // Show recording indicator
@@ -512,6 +527,16 @@ class CalDashboard {
       const sendVoice = async () => {
         if (!audioBlob) return;
         
+        // LOGGING: Log audio blob details
+        const recordingDurationMs = Date.now() - recordingStartTime;
+        const recordingDurationSec = Math.floor(recordingDurationMs / 1000);
+        console.log('=== VOICE SEND DEBUG ===');
+        console.log('Audio blob size (bytes):', audioBlob.size);
+        console.log('Recording duration (ms):', recordingDurationMs);
+        console.log('Recording duration (sec):', recordingDurationSec);
+        console.log('Audio blob type:', audioBlob.type);
+        console.log('Audio chunks collected:', audioChunks.length);
+        
         // Show that we're sending
         this.addChatMessage('[Voice message sending...]', 'user');
         
@@ -520,13 +545,25 @@ class CalDashboard {
         reader.onload = () => {
           const base64 = reader.result.split(',')[1];
           
+          // LOGGING: Log base64 size
+          console.log('Base64 length (chars):', base64.length);
+          console.log('Base64 first 100 chars:', base64.substring(0, 100));
+          console.log('======================');
+          
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
+            console.log('Sending voice message via WebSocket...');
+            const voicePayload = {
               type: 'voice',
               channel: 'webchat',
               audio: base64,
-              mimeType: 'audio/webm'
-            }));
+              mimeType: 'audio/webm',
+              timestamp: Date.now()  // Add timestamp to prevent caching
+            };
+            console.log('Voice payload size:', JSON.stringify(voicePayload).length);
+            this.ws.send(JSON.stringify(voicePayload));
+            console.log('Voice message sent');
+          } else {
+            console.warn('WebSocket not open for voice send');
           }
         };
         reader.readAsDataURL(audioBlob);
