@@ -865,32 +865,299 @@ class CalDashboard {
     setTimeout(() => { status.textContent = ''; }, 3000);
   }
   
-  // Cron Jobs
+  // Cron Jobs - Enhanced with card view and editor
   async loadCronJobs() {
-    const list = document.getElementById('cron-list');
-    list.innerHTML = '<div class="empty-state">Loading...</div>';
+    const grid = document.getElementById('cron-cards-grid');
+    grid.innerHTML = '<div class="cron-loading"><div class="cron-loading-spinner"></div></div>';
     
     try {
       const res = await fetch('/api/cron');
       const data = await res.json();
       
       if (data.jobs && data.jobs.length > 0) {
-        list.innerHTML = data.jobs.map(job => `
-          <div class="cron-item">
-            <div class="cron-info">
-              <div class="cron-name">${job.name || job.file}</div>
-              <div class="cron-schedule">${job.schedule || job.cron || 'N/A'}</div>
-            </div>
-            <span class="cron-status ${job.enabled !== false ? 'active' : 'paused'}">
-              ${job.enabled !== false ? 'Active' : 'Paused'}
-            </span>
-          </div>
-        `).join('');
+        this.cronJobs = data.jobs; // Store for editing
+        grid.innerHTML = data.jobs.map(job => this.renderCronCard(job)).join('');
+        
+        // Add click handlers
+        document.querySelectorAll('.cron-job-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const jobId = card.dataset.jobId;
+            this.openCronEditor(jobId);
+          });
+        });
       } else {
-        list.innerHTML = '<div class="empty-state">No cron jobs configured</div>';
+        grid.innerHTML = `
+          <div class="cron-empty-state">
+            <div class="cron-empty-icon">⏰</div>
+            <div class="cron-empty-title">No cron jobs yet</div>
+            <div class="cron-empty-desc">Scheduled tasks will appear here when configured</div>
+          </div>
+        `;
       }
     } catch (e) {
-      list.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+      grid.innerHTML = `
+        <div class="cron-empty-state">
+          <div class="cron-empty-icon">⚠️</div>
+          <div class="cron-empty-title">Error loading jobs</div>
+          <div class="cron-empty-desc">${this.escapeHtml(e.message)}</div>
+        </div>
+      `;
+    }
+  }
+  
+  renderCronCard(job) {
+    const isEnabled = job.enabled !== false;
+    const schedule = this.formatCronSchedule(job.schedule);
+    const nextRun = job.state?.nextRunAtMs 
+      ? this.formatNextRun(job.state.nextRunAtMs) 
+      : 'Not scheduled';
+    const sessionTarget = job.sessionTarget || 'isolated';
+    
+    return `
+      <div class="cron-job-card ${isEnabled ? '' : 'disabled'}" data-job-id="${job.id}">
+        <div class="cron-card-header">
+          <div class="cron-card-title">${this.escapeHtml(job.name)}</div>
+          <div class="cron-status-badge ${isEnabled ? 'active' : 'disabled'}">
+            ${isEnabled ? 'Active' : 'Paused'}
+          </div>
+        </div>
+        
+        <div class="cron-card-schedule">
+          <div class="cron-schedule-icon">⏱️</div>
+          <div class="cron-schedule-text">
+            <div class="cron-schedule-label">Schedule</div>
+            <div class="cron-schedule-value">${this.escapeHtml(schedule)}</div>
+          </div>
+        </div>
+        
+        <div class="cron-card-meta">
+          <div class="cron-meta-item">
+            <div class="cron-meta-label">Next Run</div>
+            <div class="cron-meta-value">${this.escapeHtml(nextRun)}</div>
+          </div>
+          <div class="cron-meta-item">
+            <div class="cron-meta-label">Session</div>
+            <div class="cron-meta-value session-${sessionTarget}">${this.escapeHtml(sessionTarget)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  formatCronSchedule(schedule) {
+    if (!schedule) return 'Not configured';
+    
+    if (schedule.kind === 'every' && schedule.everyMs) {
+      const minutes = Math.round(schedule.everyMs / 60000);
+      if (minutes < 60) return `Every ${minutes}m`;
+      const hours = Math.round(minutes / 60);
+      if (hours < 24) return `Every ${hours}h`;
+      const days = Math.round(hours / 24);
+      return `Every ${days}d`;
+    }
+    
+    if (schedule.kind === 'cron' && schedule.expr) {
+      return schedule.expr;
+    }
+    
+    return schedule.kind || 'Unknown';
+  }
+  
+  formatNextRun(timestamp) {
+    const now = Date.now();
+    const diff = timestamp - now;
+    
+    if (diff < 0) return 'Overdue';
+    
+    const minutes = Math.round(diff / 60000);
+    if (minutes < 60) return `${minutes}m`;
+    
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+    
+    const days = Math.round(hours / 24);
+    return `${days}d`;
+  }
+  
+  async openCronEditor(jobId) {
+    const job = this.cronJobs.find(j => j.id === jobId);
+    if (!job) return;
+    
+    // Create modal
+    const overlay = document.createElement('div');
+    overlay.className = 'cron-editor-overlay';
+    overlay.innerHTML = `
+      <div class="cron-editor-modal">
+        <div class="cron-editor-header">
+          <div>
+            <div class="cron-editor-title">${this.escapeHtml(job.name)}</div>
+            <div class="cron-editor-subtitle">Edit cron job configuration</div>
+          </div>
+          <button class="cron-editor-close" id="cron-close">✕</button>
+        </div>
+        
+        <div class="cron-editor-body">
+          <div class="cron-form-grid">
+            <div class="cron-form-group">
+              <label class="cron-form-label">Job Name</label>
+              <input type="text" class="cron-form-input" id="cron-name" value="${this.escapeHtml(job.name)}">
+            </div>
+            
+            <div class="cron-form-group">
+              <label class="cron-form-label">Schedule</label>
+              <input type="text" class="cron-form-input" id="cron-schedule" 
+                     value="${job.schedule?.kind === 'every' ? job.schedule.everyMs / 60000 : (job.schedule?.expr || '')}"
+                     placeholder="15 (minutes) or cron expression">
+              <div class="cron-form-hint">
+                Enter minutes for interval (e.g., "15" for every 15 minutes) or cron expression
+              </div>
+            </div>
+            
+            <div class="cron-form-group">
+              <label class="cron-form-label">Message / Task</label>
+              <textarea class="cron-form-textarea" id="cron-message" placeholder="The task or message to execute">${this.escapeHtml(job.payload?.message || '')}</textarea>
+            </div>
+            
+            <div class="cron-form-group">
+              <label class="cron-form-label">Session Target</label>
+              <select class="cron-form-select" id="cron-session">
+                <option value="isolated" ${job.sessionTarget === 'isolated' ? 'selected' : ''}>Isolated</option>
+                <option value="main" ${job.sessionTarget === 'main' ? 'selected' : ''}>Main</option>
+              </select>
+              <div class="cron-form-hint">
+                Isolated: Fresh session each run. Main: Shared memory with main agent.
+              </div>
+            </div>
+            
+            <div class="cron-form-toggle" id="cron-enabled-toggle">
+              <div class="cron-toggle-switch ${job.enabled !== false ? 'active' : ''}" id="cron-toggle-switch"></div>
+              <div class="cron-toggle-label">Job Enabled</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="cron-editor-footer">
+          <div class="cron-editor-status" id="cron-status"></div>
+          <div class="cron-editor-actions">
+            <button class="cron-btn cron-btn-cancel" id="cron-cancel">Cancel</button>
+            <button class="cron-btn cron-btn-save" id="cron-save">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Toggle switch interaction
+    const toggleSwitch = document.getElementById('cron-toggle-switch');
+    const toggleContainer = document.getElementById('cron-enabled-toggle');
+    let isEnabled = job.enabled !== false;
+    
+    toggleContainer.addEventListener('click', () => {
+      isEnabled = !isEnabled;
+      toggleSwitch.classList.toggle('active', isEnabled);
+    });
+    
+    // Close handlers
+    const closeModal = () => overlay.remove();
+    document.getElementById('cron-close').addEventListener('click', closeModal);
+    document.getElementById('cron-cancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+    
+    // Save handler
+    document.getElementById('cron-save').addEventListener('click', async () => {
+      await this.saveCronJob(jobId, isEnabled);
+    });
+    
+    // ESC to close
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  }
+  
+  async saveCronJob(jobId, isEnabled) {
+    const status = document.getElementById('cron-status');
+    const saveBtn = document.getElementById('cron-save');
+    
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saving...';
+    saveBtn.disabled = true;
+    
+    try {
+      const name = document.getElementById('cron-name').value.trim();
+      const scheduleInput = document.getElementById('cron-schedule').value.trim();
+      const message = document.getElementById('cron-message').value.trim();
+      const sessionTarget = document.getElementById('cron-session').value;
+      
+      if (!name || !scheduleInput || !message) {
+        throw new Error('Name, schedule, and message are required');
+      }
+      
+      // Parse schedule
+      let schedule;
+      if (/^\d+$/.test(scheduleInput)) {
+        // Simple minutes interval
+        schedule = {
+          kind: 'every',
+          everyMs: parseInt(scheduleInput) * 60000
+        };
+      } else {
+        // Assume cron expression
+        schedule = {
+          kind: 'cron',
+          expr: scheduleInput
+        };
+      }
+      
+      // Build update payload
+      const updates = {
+        name,
+        enabled: isEnabled,
+        schedule,
+        sessionTarget,
+        payload: {
+          kind: 'agentTurn',
+          message,
+          model: 'openrouter/google/gemini-2.0-flash-lite'
+        }
+      };
+      
+      const res = await fetch(`/api/cron/${jobId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        status.textContent = '✓ Saved successfully!';
+        status.className = 'cron-editor-status success';
+        saveBtn.textContent = 'Saved ✓';
+        
+        // Reload jobs after a brief delay
+        setTimeout(() => {
+          document.querySelector('.cron-editor-overlay')?.remove();
+          this.loadCronJobs();
+        }, 1000);
+      } else {
+        throw new Error(data.error || 'Save failed');
+      }
+    } catch (err) {
+      status.textContent = `✗ ${err.message}`;
+      status.className = 'cron-editor-status error';
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+      
+      setTimeout(() => {
+        status.textContent = '';
+      }, 3000);
     }
   }
   

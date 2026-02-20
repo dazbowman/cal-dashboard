@@ -353,16 +353,80 @@ app.get('/api/cron', (req, res) => {
     if (!fs.existsSync(cronDir)) {
       return res.json({ jobs: [] });
     }
-    const files = fs.readdirSync(cronDir).filter(f => f.endsWith('.json'));
-    const jobs = files.map(f => {
-      try {
-        const content = fs.readFileSync(path.join(cronDir, f), 'utf8');
-        return { file: f, ...JSON.parse(content) };
-      } catch {
-        return { file: f, error: 'Parse error' };
-      }
-    });
-    res.json({ jobs });
+    
+    // Read jobs.json which contains all jobs
+    const jobsFile = path.join(cronDir, 'jobs.json');
+    if (!fs.existsSync(jobsFile)) {
+      return res.json({ jobs: [] });
+    }
+    
+    const content = fs.readFileSync(jobsFile, 'utf8');
+    const data = JSON.parse(content);
+    
+    res.json({ jobs: data.jobs || [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Get single cron job
+app.get('/api/cron/:id', (req, res) => {
+  const cronDir = path.join(OPENCLAW_BASE, 'cron');
+  const jobsFile = path.join(cronDir, 'jobs.json');
+  
+  try {
+    if (!fs.existsSync(jobsFile)) {
+      return res.status(404).json({ error: 'Jobs file not found' });
+    }
+    
+    const content = fs.readFileSync(jobsFile, 'utf8');
+    const data = JSON.parse(content);
+    const job = data.jobs.find(j => j.id === req.params.id);
+    
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    res.json({ job });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Update cron job
+app.put('/api/cron/:id', (req, res) => {
+  const cronDir = path.join(OPENCLAW_BASE, 'cron');
+  const jobsFile = path.join(cronDir, 'jobs.json');
+  
+  try {
+    if (!fs.existsSync(jobsFile)) {
+      return res.status(404).json({ error: 'Jobs file not found' });
+    }
+    
+    const content = fs.readFileSync(jobsFile, 'utf8');
+    const data = JSON.parse(content);
+    const jobIndex = data.jobs.findIndex(j => j.id === req.params.id);
+    
+    if (jobIndex === -1) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    // Update job with provided fields
+    const updatedJob = {
+      ...data.jobs[jobIndex],
+      ...req.body,
+      updatedAtMs: Date.now()
+    };
+    
+    data.jobs[jobIndex] = updatedJob;
+    
+    // Create backup
+    fs.writeFileSync(jobsFile + '.bak', content, 'utf8');
+    
+    // Write updated jobs
+    fs.writeFileSync(jobsFile, JSON.stringify(data, null, 2), 'utf8');
+    
+    res.json({ success: true, job: updatedJob });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
